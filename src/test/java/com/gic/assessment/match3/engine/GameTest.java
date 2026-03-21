@@ -121,15 +121,16 @@ class GameTest {
         assertTrue(output.contains("Frame 7\n" + frame7Field),
                 "Frame 7: V*@^ at rows 4-6, col 1 after R + auto-drop");
 
-        // ── Frame 8: Final frame after placement + match clearing ────────
+        // ── Frame 8: Final frame after placement + match clearing + gravity ─
         // DR in Frame 7: D drops to rows 5-7, col 1.
         // R: blocked (col 2, row 7 has ^). Auto-drop: can't → stationary.
         // Placed: (5,1)=*, (6,1)=@, (7,1)=^
         // Row 7 becomes: . ^ ^ ^ * → 3 matching ^ at cols 1-3 → cleared.
-        // Final row 7: . . . . *
+        // Gravity: * and @ in col 1 drop down 1 row each.
+        // Final: row 7 = ". * . . .", row 8 = ". @ . . *"
         String frame8Field = buildField(
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,
-                EMPTY_ROW,  ". * . . .", ". @ . . .", ". . . . *");
+                EMPTY_ROW,  EMPTY_ROW,  ". * . . .", ". @ . . *");
         assertTrue(output.contains("Frame 8\n" + frame8Field),
                 "Frame 8: final field after 3 ^ cleared from row 8");
 

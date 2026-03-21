@@ -7,31 +7,47 @@ import com.gic.assessment.match3.model.Field;
  *
  * A match is a horizontal or vertical run of 3 or more consecutive cells
  * containing the same symbol.  All matches are identified first, then
- * removed simultaneously.  Gravity is NOT applied after removal — cleared
- * cells simply become empty ('.').
+ * removed simultaneously.  After removal, gravity is applied so that
+ * floating symbols fall down to fill gaps.  This process repeats until
+ * no new matches are formed (chain reactions).
  */
 public class MatchChecker {
 
     private static final int MIN_RUN_LENGTH = 3;
 
     /**
-     * Scans the entire field for horizontal and vertical matches of 3+
-     * identical symbols, then clears (sets to EMPTY) every matched cell.
+     * Repeatedly scans for matches, clears them, and applies gravity
+     * until no further matches exist (resolving chain reactions).
      *
-     * Algorithm:
-     *   1. Create a boolean[][] "toRemove" grid, same size as the field.
-     *   2. Scan every row left-to-right for horizontal runs of 3+.
-     *   3. Scan every column top-to-bottom for vertical runs of 3+.
-     *   4. Any cell marked true in toRemove is set to EMPTY on the field.
-     *
-     * All matches are collected before any cells are cleared, so overlapping
-     * matches (e.g. a cross shape) are handled correctly in a single pass.
+     * Each iteration:
+     *   1. Scan for horizontal and vertical runs of 3+.
+     *   2. Clear all matched cells simultaneously.
+     *   3. Apply gravity so floating symbols drop down.
+     *   4. If any cells were cleared, repeat (new matches may have formed).
      *
      * @param field the game field to check and modify
-     * @return the total number of cells that were cleared
+     * @return the total number of cells cleared across all iterations
      */
     public static int checkAndClear(Field field) {
-        // toRemove[row][col] = true means this cell is part of a match
+        int totalCleared = 0;
+        int cleared;
+        do {
+            cleared = singlePassClear(field);
+            if (cleared > 0) {
+                field.applyGravity();
+            }
+            totalCleared += cleared;
+        } while (cleared > 0);
+        return totalCleared;
+    }
+
+    /**
+     * Performs a single round of match detection and clearing (no gravity).
+     *
+     * @param field the game field to check and modify
+     * @return the number of cells cleared in this pass
+     */
+    static int singlePassClear(Field field) {
         boolean[][] toRemove = new boolean[field.getHeight()][field.getWidth()];
 
         markHorizontalRuns(field, toRemove);

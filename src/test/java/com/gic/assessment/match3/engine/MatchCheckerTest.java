@@ -253,6 +253,74 @@ class MatchCheckerTest {
     }
 
     @Test
+    void gravityAfterClearDropsFloatingCells() {
+        // Column:  ^  .  ^  ^  ^   (top to bottom, col 0)
+        //          After clearing ^^^: top ^ floats, gravity drops it
+        Field field = new Field(1, 5);
+        field.setCell(0, 0, '^');
+        field.setCell(2, 0, '^');
+        field.setCell(3, 0, '^');
+        field.setCell(4, 0, '^');
+
+        int cleared = MatchChecker.checkAndClear(field);
+        assertEquals(3, cleared);
+        // The floating ^ at row 0 should have dropped to the bottom
+        assertEquals('^', field.getCell(4, 0));
+        for (int r = 0; r < 4; r++) {
+            assertEquals(Field.EMPTY, field.getCell(r, 0));
+        }
+    }
+
+    @Test
+    void chainReactionFromGravity() {
+        // Set up so that clearing a horizontal match causes symbols to fall
+        // and form a new vertical match.
+        //
+        // col:  0  1  2
+        // row 0: .  *  .
+        // row 1: .  *  .
+        // row 2: ^  ^  ^   ← horizontal match (cleared first)
+        // row 3: .  *  .
+        //
+        // After clearing row 2: gravity drops col 1 symbols →
+        // col 1 becomes: .  *  *  *  → vertical match of 3 *'s
+        Field field = new Field(3, 4);
+        field.setCell(0, 1, '*');
+        field.setCell(1, 1, '*');
+        field.setCell(2, 0, '^');
+        field.setCell(2, 1, '^');
+        field.setCell(2, 2, '^');
+        field.setCell(3, 1, '*');
+
+        int cleared = MatchChecker.checkAndClear(field);
+        // First pass: 3 (^^^), then gravity → col 1 = [*, *, *] → second pass: 3
+        assertEquals(6, cleared);
+        // Everything should be empty now
+        for (int r = 0; r < 4; r++)
+            for (int c = 0; c < 3; c++)
+                assertEquals(Field.EMPTY, field.getCell(r, c));
+    }
+
+    @Test
+    void noChainWhenGravityDoesNotCreateMatch() {
+        // Horizontal match with different symbols above — no chain
+        Field field = new Field(3, 3);
+        field.setCell(0, 0, '*');
+        field.setCell(0, 1, '@');
+        field.setCell(0, 2, '~');
+        field.setCell(2, 0, '^');
+        field.setCell(2, 1, '^');
+        field.setCell(2, 2, '^');
+
+        int cleared = MatchChecker.checkAndClear(field);
+        assertEquals(3, cleared);
+        // After gravity, the different symbols drop to row 2 — no new match
+        assertEquals('*', field.getCell(2, 0));
+        assertEquals('@', field.getCell(2, 1));
+        assertEquals('~', field.getCell(2, 2));
+    }
+
+    @Test
     void matchFromPdfExample() {
         // Simulates the final state before match clearing in the PDF example:
         // Brick 1 (H^^*) at row 7, cols 2,3,4
@@ -269,9 +337,10 @@ class MatchCheckerTest {
         int cleared = MatchChecker.checkAndClear(field);
         assertEquals(3, cleared); // three ^ at row 7, cols 1,2,3
 
-        assertEquals('*', field.getCell(5, 1));
-        assertEquals('@', field.getCell(6, 1));
-        assertEquals(Field.EMPTY, field.getCell(7, 1));
+        // After clearing + gravity: * and @ drop down 1 row in col 1
+        assertEquals(Field.EMPTY, field.getCell(5, 1));
+        assertEquals('*', field.getCell(6, 1));
+        assertEquals('@', field.getCell(7, 1));
         assertEquals(Field.EMPTY, field.getCell(7, 2));
         assertEquals(Field.EMPTY, field.getCell(7, 3));
         assertEquals('*', field.getCell(7, 4));

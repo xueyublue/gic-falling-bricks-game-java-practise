@@ -140,4 +140,86 @@ class FieldTest {
         assertTrue(ex.getMessage().contains("10"));
         assertTrue(ex.getMessage().contains("3"));
     }
+
+    @Test
+    void gravityDropsSingleCell() {
+        Field field = new Field(3, 4);
+        field.setCell(0, 1, '^');
+        field.applyGravity();
+        assertEquals(Field.EMPTY, field.getCell(0, 1));
+        assertEquals('^', field.getCell(3, 1));
+    }
+
+    @Test
+    void gravityPreservesColumnOrder() {
+        Field field = new Field(1, 5);
+        field.setCell(0, 0, '^');
+        field.setCell(2, 0, '*');
+        field.setCell(4, 0, '@');
+        field.applyGravity();
+        assertEquals('^', field.getCell(2, 0));
+        assertEquals('*', field.getCell(3, 0));
+        assertEquals('@', field.getCell(4, 0));
+        assertEquals(Field.EMPTY, field.getCell(0, 0));
+        assertEquals(Field.EMPTY, field.getCell(1, 0));
+    }
+
+    @Test
+    void gravityNoOpWhenAlreadySettled() {
+        Field field = new Field(3, 3);
+        field.setCell(2, 0, '^');
+        field.setCell(2, 1, '*');
+        field.setCell(2, 2, '@');
+        field.applyGravity();
+        assertEquals('^', field.getCell(2, 0));
+        assertEquals('*', field.getCell(2, 1));
+        assertEquals('@', field.getCell(2, 2));
+    }
+
+    @Test
+    void gravityOnEmptyField() {
+        Field field = new Field(3, 3);
+        field.applyGravity();
+        for (int r = 0; r < 3; r++)
+            for (int c = 0; c < 3; c++)
+                assertTrue(field.isEmpty(r, c));
+    }
+
+    @Test
+    void gravityFillsGapInMiddle() {
+        Field field = new Field(1, 4);
+        field.setCell(0, 0, '^');
+        field.setCell(1, 0, '*');
+        // row 2 is empty (gap)
+        field.setCell(3, 0, '@');
+        field.applyGravity();
+        assertEquals(Field.EMPTY, field.getCell(0, 0));
+        assertEquals('^', field.getCell(1, 0));
+        assertEquals('*', field.getCell(2, 0));
+        assertEquals('@', field.getCell(3, 0));
+    }
+
+    @Test
+    void gravityMultipleColumns() {
+        Field field = new Field(3, 4);
+        field.setCell(0, 0, '^');
+        field.setCell(0, 2, '*');
+        field.applyGravity();
+        assertEquals('^', field.getCell(3, 0));
+        assertEquals('*', field.getCell(3, 2));
+        assertEquals(Field.EMPTY, field.getCell(0, 0));
+        assertEquals(Field.EMPTY, field.getCell(0, 2));
+    }
+
+    @Test
+    void gravityFullColumn() {
+        Field field = new Field(1, 3);
+        field.setCell(0, 0, '^');
+        field.setCell(1, 0, '*');
+        field.setCell(2, 0, '@');
+        field.applyGravity();
+        assertEquals('^', field.getCell(0, 0));
+        assertEquals('*', field.getCell(1, 0));
+        assertEquals('@', field.getCell(2, 0));
+    }
 }

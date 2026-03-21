@@ -95,7 +95,7 @@ public class Game {
      *      If the starting cells are blocked → break (game over).
      *   2. Run processBrick() which handles frames until the brick is stationary.
      *   3. Write the brick's symbols onto the field permanently.
-     *   4. Check for and clear any 3-in-a-row matches.
+     *   4. Clear matches, apply gravity, and repeat until no chain reactions remain.
      *   5. Move to the next brick.
      *
      * After all bricks are placed (or a brick could not be spawned),
@@ -117,7 +117,7 @@ public class Game {
             // Brick is now stationary — write its symbols onto the field
             activeBrick.placeOnField(field);
 
-            // Remove any horizontal/vertical runs of 3+ matching symbols
+            // Clear matches, apply gravity, and resolve chain reactions
             MatchChecker.checkAndClear(field);
 
             // Advance to the next brick in the list
