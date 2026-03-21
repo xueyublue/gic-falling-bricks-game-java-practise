@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MatchCheckerTest {
 
+    private static final int PPC = MatchChecker.POINTS_PER_CELL;
+
     @Test
     void horizontalMatchOfThree() {
         Field field = new Field(5, 5);
@@ -14,8 +16,8 @@ class MatchCheckerTest {
         field.setCell(4, 2, '^');
         field.setCell(4, 3, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(3, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3, result.totalCleared());
         assertEquals(Field.EMPTY, field.getCell(4, 1));
         assertEquals(Field.EMPTY, field.getCell(4, 2));
         assertEquals(Field.EMPTY, field.getCell(4, 3));
@@ -28,8 +30,8 @@ class MatchCheckerTest {
         field.setCell(3, 1, '*');
         field.setCell(4, 1, '*');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(3, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3, result.totalCleared());
         assertEquals(Field.EMPTY, field.getCell(2, 1));
         assertEquals(Field.EMPTY, field.getCell(3, 1));
         assertEquals(Field.EMPTY, field.getCell(4, 1));
@@ -41,8 +43,9 @@ class MatchCheckerTest {
         field.setCell(4, 1, '^');
         field.setCell(4, 2, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(0, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(0, result.totalCleared());
+        assertEquals(0, result.score());
         assertEquals('^', field.getCell(4, 1));
         assertEquals('^', field.getCell(4, 2));
     }
@@ -55,47 +58,43 @@ class MatchCheckerTest {
         field.setCell(4, 2, '@');
         field.setCell(4, 3, '@');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(4, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(4, result.totalCleared());
     }
 
     @Test
     void multipleMatchesAtOnce() {
         Field field = new Field(5, 5);
-        // Horizontal match
         field.setCell(4, 0, '^');
         field.setCell(4, 1, '^');
         field.setCell(4, 2, '^');
-        // Vertical match
         field.setCell(0, 4, '*');
         field.setCell(1, 4, '*');
         field.setCell(2, 4, '*');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(6, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(6, result.totalCleared());
     }
 
     @Test
     void crossMatch() {
         Field field = new Field(5, 5);
-        // Horizontal: row 2, cols 0-2
         field.setCell(2, 0, '^');
         field.setCell(2, 1, '^');
         field.setCell(2, 2, '^');
-        // Vertical: rows 0-2, col 1 (overlaps at (2,1))
         field.setCell(0, 1, '^');
         field.setCell(1, 1, '^');
-        // (2,1) already set
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(5, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(5, result.totalCleared());
     }
 
     @Test
     void noMatchOnEmptyField() {
         Field field = new Field(5, 5);
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(0, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(0, result.totalCleared());
+        assertEquals(0, result.score());
     }
 
     @Test
@@ -105,8 +104,8 @@ class MatchCheckerTest {
         field.setCell(4, 1, '*');
         field.setCell(4, 2, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(0, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(0, result.totalCleared());
     }
 
     @Test
@@ -115,8 +114,8 @@ class MatchCheckerTest {
         for (int c = 0; c < 5; c++) {
             field.setCell(2, c, '^');
         }
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(5, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(5, result.totalCleared());
         for (int c = 0; c < 5; c++) {
             assertEquals(Field.EMPTY, field.getCell(2, c));
         }
@@ -128,8 +127,8 @@ class MatchCheckerTest {
         for (int r = 0; r < 5; r++) {
             field.setCell(r, 1, '*');
         }
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(5, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(5, result.totalCleared());
         for (int r = 0; r < 5; r++) {
             assertEquals(Field.EMPTY, field.getCell(r, 1));
         }
@@ -145,8 +144,8 @@ class MatchCheckerTest {
         field.setCell(3, 2, '*');
         field.setCell(3, 3, '*');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(6, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(6, result.totalCleared());
     }
 
     @Test
@@ -159,23 +158,21 @@ class MatchCheckerTest {
         field.setCell(2, 4, '@');
         field.setCell(3, 4, '@');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(6, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(6, result.totalCleared());
     }
 
     @Test
     void tShapeMatch() {
         Field field = new Field(5, 5);
-        // Horizontal: row 2, cols 0-2
         field.setCell(2, 0, '^');
         field.setCell(2, 1, '^');
         field.setCell(2, 2, '^');
-        // Vertical continuing from (2,1): rows 2-4
         field.setCell(3, 1, '^');
         field.setCell(4, 1, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(5, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(5, result.totalCleared());
     }
 
     @Test
@@ -188,8 +185,8 @@ class MatchCheckerTest {
         field.setCell(0, 4, '*');
         field.setCell(0, 5, '*');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(6, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(6, result.totalCleared());
     }
 
     @Test
@@ -199,8 +196,8 @@ class MatchCheckerTest {
         field.setCell(0, 1, '^');
         field.setCell(1, 0, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(0, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(0, result.totalCleared());
     }
 
     @Test
@@ -210,8 +207,8 @@ class MatchCheckerTest {
         field.setCell(0, 1, '@');
         field.setCell(0, 2, '@');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(3, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3, result.totalCleared());
     }
 
     @Test
@@ -223,8 +220,8 @@ class MatchCheckerTest {
         field.setCell(0, 3, '^');
         field.setCell(0, 4, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(0, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(0, result.totalCleared());
     }
 
     @Test
@@ -232,39 +229,33 @@ class MatchCheckerTest {
         Field field = new Field(5, 1);
         field.setCell(0, 0, '^');
         field.setCell(0, 1, '^');
-        // (0,2) is empty
         field.setCell(0, 3, '^');
         field.setCell(0, 4, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(0, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(0, result.totalCleared());
     }
 
     @Test
     void crossMatchCountsOverlapOnce() {
         Field field = new Field(5, 5);
-        // Horizontal: row 2, cols 0-4
         for (int c = 0; c < 5; c++) field.setCell(2, c, '*');
-        // Vertical: col 2, rows 0-4
         for (int r = 0; r < 5; r++) field.setCell(r, 2, '*');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(9, cleared); // 5 + 5 - 1 overlap
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(9, result.totalCleared());
     }
 
     @Test
     void gravityAfterClearDropsFloatingCells() {
-        // Column:  ^  .  ^  ^  ^   (top to bottom, col 0)
-        //          After clearing ^^^: top ^ floats, gravity drops it
         Field field = new Field(1, 5);
         field.setCell(0, 0, '^');
         field.setCell(2, 0, '^');
         field.setCell(3, 0, '^');
         field.setCell(4, 0, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(3, cleared);
-        // The floating ^ at row 0 should have dropped to the bottom
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3, result.totalCleared());
         assertEquals('^', field.getCell(4, 0));
         for (int r = 0; r < 4; r++) {
             assertEquals(Field.EMPTY, field.getCell(r, 0));
@@ -273,17 +264,6 @@ class MatchCheckerTest {
 
     @Test
     void chainReactionFromGravity() {
-        // Set up so that clearing a horizontal match causes symbols to fall
-        // and form a new vertical match.
-        //
-        // col:  0  1  2
-        // row 0: .  *  .
-        // row 1: .  *  .
-        // row 2: ^  ^  ^   ← horizontal match (cleared first)
-        // row 3: .  *  .
-        //
-        // After clearing row 2: gravity drops col 1 symbols →
-        // col 1 becomes: .  *  *  *  → vertical match of 3 *'s
         Field field = new Field(3, 4);
         field.setCell(0, 1, '*');
         field.setCell(1, 1, '*');
@@ -292,10 +272,8 @@ class MatchCheckerTest {
         field.setCell(2, 2, '^');
         field.setCell(3, 1, '*');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        // First pass: 3 (^^^), then gravity → col 1 = [*, *, *] → second pass: 3
-        assertEquals(6, cleared);
-        // Everything should be empty now
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(6, result.totalCleared());
         for (int r = 0; r < 4; r++)
             for (int c = 0; c < 3; c++)
                 assertEquals(Field.EMPTY, field.getCell(r, c));
@@ -303,7 +281,6 @@ class MatchCheckerTest {
 
     @Test
     void noChainWhenGravityDoesNotCreateMatch() {
-        // Horizontal match with different symbols above — no chain
         Field field = new Field(3, 3);
         field.setCell(0, 0, '*');
         field.setCell(0, 1, '@');
@@ -312,9 +289,8 @@ class MatchCheckerTest {
         field.setCell(2, 1, '^');
         field.setCell(2, 2, '^');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(3, cleared);
-        // After gravity, the different symbols drop to row 2 — no new match
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3, result.totalCleared());
         assertEquals('*', field.getCell(2, 0));
         assertEquals('@', field.getCell(2, 1));
         assertEquals('~', field.getCell(2, 2));
@@ -322,27 +298,109 @@ class MatchCheckerTest {
 
     @Test
     void matchFromPdfExample() {
-        // Simulates the final state before match clearing in the PDF example:
-        // Brick 1 (H^^*) at row 7, cols 2,3,4
-        // Brick 2 (V*@^) at col 1, rows 5,6,7
-        // Row 7: ^ at col 1, ^ at col 2, ^ at col 3, * at col 4
         Field field = new Field(5, 8);
-        field.setCell(5, 1, '*'); // V brick top
-        field.setCell(6, 1, '@'); // V brick middle
-        field.setCell(7, 1, '^'); // V brick bottom
-        field.setCell(7, 2, '^'); // H brick symbol 1
-        field.setCell(7, 3, '^'); // H brick symbol 2
-        field.setCell(7, 4, '*'); // H brick symbol 3
+        field.setCell(5, 1, '*');
+        field.setCell(6, 1, '@');
+        field.setCell(7, 1, '^');
+        field.setCell(7, 2, '^');
+        field.setCell(7, 3, '^');
+        field.setCell(7, 4, '*');
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(3, cleared); // three ^ at row 7, cols 1,2,3
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3, result.totalCleared());
 
-        // After clearing + gravity: * and @ drop down 1 row in col 1
         assertEquals(Field.EMPTY, field.getCell(5, 1));
         assertEquals('*', field.getCell(6, 1));
         assertEquals('@', field.getCell(7, 1));
         assertEquals(Field.EMPTY, field.getCell(7, 2));
         assertEquals(Field.EMPTY, field.getCell(7, 3));
         assertEquals('*', field.getCell(7, 4));
+    }
+
+    // ── Scoring tests ──────────────────────────────────────────────────
+
+    @Test
+    void scoreForSimpleMatchChain1() {
+        Field field = new Field(3, 1);
+        field.setCell(0, 0, '^');
+        field.setCell(0, 1, '^');
+        field.setCell(0, 2, '^');
+
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3, result.totalCleared());
+        assertEquals(3 * PPC * 1, result.score());
+    }
+
+    @Test
+    void scoreForFourCellMatch() {
+        Field field = new Field(4, 1);
+        field.setCell(0, 0, '*');
+        field.setCell(0, 1, '*');
+        field.setCell(0, 2, '*');
+        field.setCell(0, 3, '*');
+
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(4, result.totalCleared());
+        assertEquals(4 * PPC * 1, result.score());
+    }
+
+    @Test
+    void scoreForChainReactionWithMultiplier() {
+        // Chain 1: ^^^ horizontal (3 cells * 10 * 1 = 30)
+        // Gravity creates chain 2: *** vertical (3 cells * 10 * 2 = 60)
+        // Total score = 90
+        Field field = new Field(3, 4);
+        field.setCell(0, 1, '*');
+        field.setCell(1, 1, '*');
+        field.setCell(2, 0, '^');
+        field.setCell(2, 1, '^');
+        field.setCell(2, 2, '^');
+        field.setCell(3, 1, '*');
+
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(6, result.totalCleared());
+        assertEquals(3 * PPC * 1 + 3 * PPC * 2, result.score());
+    }
+
+    @Test
+    void scoreZeroWhenNoMatch() {
+        Field field = new Field(3, 3);
+        field.setCell(0, 0, '^');
+        field.setCell(0, 1, '*');
+
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(0, result.totalCleared());
+        assertEquals(0, result.score());
+    }
+
+    @Test
+    void scoreForMultipleMatchesSamePass() {
+        // Two independent matches cleared in the same pass count as chain 1
+        Field field = new Field(6, 1);
+        field.setCell(0, 0, '^');
+        field.setCell(0, 1, '^');
+        field.setCell(0, 2, '^');
+        field.setCell(0, 3, '*');
+        field.setCell(0, 4, '*');
+        field.setCell(0, 5, '*');
+
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(6, result.totalCleared());
+        assertEquals(6 * PPC * 1, result.score());
+    }
+
+    @Test
+    void scoreFromPdfExample() {
+        // 3 cells cleared at chain level 1 → 3 * 10 * 1 = 30
+        Field field = new Field(5, 8);
+        field.setCell(5, 1, '*');
+        field.setCell(6, 1, '@');
+        field.setCell(7, 1, '^');
+        field.setCell(7, 2, '^');
+        field.setCell(7, 3, '^');
+        field.setCell(7, 4, '*');
+
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3 * PPC * 1, result.score());
     }
 }

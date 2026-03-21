@@ -51,6 +51,9 @@ public class Game {
     /** Monotonically increasing frame counter displayed to the user (1-based) */
     private int frameNumber;
 
+    /** Cumulative score earned from match clearing */
+    private int score;
+
     /**
      * @param scanner input source (typically wrapping System.in)
      * @param out     output destination (typically System.out)
@@ -69,7 +72,7 @@ public class Game {
     public void run() {
         initialize();
         gameLoop();
-        out.println(GAME_OVER);
+        out.println(GAME_OVER + " Final Score: " + score);
     }
 
     /**
@@ -85,6 +88,7 @@ public class Game {
         bricks = config.bricks();       // ordered list of brick definitions
         currentBrickIndex = 0;          // start with the first brick
         frameNumber = 0;                // will be incremented to 1 on the first frame
+        score = 0;                      // no points yet
     }
 
     /**
@@ -117,8 +121,8 @@ public class Game {
             // Brick is now stationary — write its symbols onto the field
             activeBrick.placeOnField(field);
 
-            // Clear matches, apply gravity, and resolve chain reactions
-            MatchChecker.checkAndClear(field);
+            // Clear matches, apply gravity, resolve chains, and accumulate score
+            score += MatchChecker.checkAndClear(field).score();
 
             // Advance to the next brick in the list
             currentBrickIndex++;
@@ -169,8 +173,9 @@ public class Game {
      * @param brick the active brick to overlay, or null for the final frame
      */
     private void displayFrame(ActiveBrick brick) {
-        frameNumber++; // advance the frame counter (first frame = 1)
+        frameNumber++;
         out.println("Frame " + frameNumber);
+        out.println("Score: " + score);
         out.println(FieldRenderer.render(field, brick));
     }
 }

@@ -40,15 +40,15 @@ class GameTest {
         );
     }
 
+    /** Builds the expected frame block: "Frame N\nScore: S\n" + field */
+    private String frameBlock(int frameNum, int score, String fieldStr) {
+        return "Frame " + frameNum + "\nScore: " + score + "\n" + fieldStr;
+    }
+
     private static final String EMPTY_ROW = ". . . . .";
 
     @Test
     void pdfExampleScenario() {
-        // Replays the exact example from the assessment PDF (v3):
-        // Input: 5 8 H^^* V*@^
-        // Frame 1: LL, Frame 2: R, Frame 3: DR
-        // Frame 4: LLR, Frame 5: (blank), Frame 6: R, Frame 7: DR
-        // Frame 8: final field after match clearing, then Game Over.
         String output = runGame(
                 "5 8 H^^* V*@^",
                 "LL",    // Frame 1
@@ -60,89 +60,65 @@ class GameTest {
                 "DR"     // Frame 7
         );
 
-        // ── Frame 1: H^^* spawns centered at row 0, cols 1-3 ────────────
-        // Brick is at: (0,1)=^, (0,2)=^, (0,3)=*
+        // Frames 1-3: brick 1 falling, score stays 0
         String frame1Field = buildField(
                 ". ^ ^ * .", EMPTY_ROW, EMPTY_ROW, EMPTY_ROW,
                 EMPTY_ROW,  EMPTY_ROW, EMPTY_ROW, EMPTY_ROW);
-        assertTrue(output.contains("Frame 1\n" + frame1Field),
-                "Frame 1: H^^* should be centered in row 1");
+        assertTrue(output.contains(frameBlock(1, 0, frame1Field)),
+                "Frame 1: H^^* should be centered in row 1, score 0");
 
-        // ── Frame 2: After LL (only 1st L applied, 2nd ignored) + auto-drop ─
-        // L: col 1→0. Second L: col -1 out of bounds, ignored.
-        // Auto-drop: row 0→1. Brick at (1, 0): ^, ^, *
         String frame2Field = buildField(
                 EMPTY_ROW, "^ ^ * . .", EMPTY_ROW, EMPTY_ROW,
                 EMPTY_ROW, EMPTY_ROW,   EMPTY_ROW, EMPTY_ROW);
-        assertTrue(output.contains("Frame 2\n" + frame2Field),
-                "Frame 2: brick should be at row 2, cols 0-2 after L + auto-drop");
+        assertTrue(output.contains(frameBlock(2, 0, frame2Field)),
+                "Frame 2: brick at row 2 after L + auto-drop, score 0");
 
-        // ── Frame 3: After R + auto-drop ─────────────────────────────────
-        // R: col 0→1. Auto-drop: row 1→2. Brick at (2, 1): ^, ^, *
         String frame3Field = buildField(
                 EMPTY_ROW, EMPTY_ROW, ". ^ ^ * .", EMPTY_ROW,
                 EMPTY_ROW, EMPTY_ROW, EMPTY_ROW,   EMPTY_ROW);
-        assertTrue(output.contains("Frame 3\n" + frame3Field),
-                "Frame 3: brick should be at row 3, cols 1-3 after R + auto-drop");
+        assertTrue(output.contains(frameBlock(3, 0, frame3Field)),
+                "Frame 3: brick at row 3 after R + auto-drop, score 0");
 
-        // ── Frame 4: After DR (brick 1 placed) + V*@^ spawns ────────────
-        // D: drops to row 7, cols 1-3. R: moves to cols 2-4.
-        // Auto-drop: can't (row 8 out of bounds) → stationary.
-        // Brick 1 placed: (7,2)=^, (7,3)=^, (7,4)=*. No matches.
-        // V*@^ spawns at rows 0-2, col 2: (0,2)=*, (1,2)=@, (2,2)=^
+        // Frame 4: brick 1 placed (no match), V*@^ spawns. Score still 0.
         String frame4Field = buildField(
                 ". . * . .", ". . @ . .", ". . ^ . .", EMPTY_ROW,
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,  ". . ^ ^ *");
-        assertTrue(output.contains("Frame 4\n" + frame4Field),
-                "Frame 4: V*@^ at top-center + H^^* placed at row 8");
+        assertTrue(output.contains(frameBlock(4, 0, frame4Field)),
+                "Frame 4: V*@^ at top-center + H^^* placed at row 8, score 0");
 
-        // ── Frame 5: After LLR (only first 2 commands: LL) + auto-drop ──
-        // L: col 2→1. L: col 1→0. R is 3rd command, ignored.
-        // Auto-drop: row 0→1. Brick at rows 1-3, col 0.
+        // Frames 5-7: brick 2 falling, score still 0
         String frame5Field = buildField(
                 EMPTY_ROW,  "* . . . .", "@ . . . .", "^ . . . .",
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,   ". . ^ ^ *");
-        assertTrue(output.contains("Frame 5\n" + frame5Field),
-                "Frame 5: V*@^ at rows 2-4, col 0 after LL + auto-drop");
+        assertTrue(output.contains(frameBlock(5, 0, frame5Field)),
+                "Frame 5: V*@^ at rows 2-4 after LL + auto-drop, score 0");
 
-        // ── Frame 6: After blank (no commands) + auto-drop ───────────────
-        // No commands. Auto-drop: row 1→2. Brick at rows 2-4, col 0.
         String frame6Field = buildField(
                 EMPTY_ROW,  EMPTY_ROW,  "* . . . .", "@ . . . .",
                 "^ . . . .", EMPTY_ROW,  EMPTY_ROW,  ". . ^ ^ *");
-        assertTrue(output.contains("Frame 6\n" + frame6Field),
-                "Frame 6: V*@^ at rows 3-5, col 0 after auto-drop");
+        assertTrue(output.contains(frameBlock(6, 0, frame6Field)),
+                "Frame 6: V*@^ at rows 3-5 after auto-drop, score 0");
 
-        // ── Frame 7: After R + auto-drop ─────────────────────────────────
-        // R: col 0→1. Auto-drop: row 2→3. Brick at rows 3-5, col 1.
         String frame7Field = buildField(
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,  ". * . . .",
                 ". @ . . .", ". ^ . . .", EMPTY_ROW,  ". . ^ ^ *");
-        assertTrue(output.contains("Frame 7\n" + frame7Field),
-                "Frame 7: V*@^ at rows 4-6, col 1 after R + auto-drop");
+        assertTrue(output.contains(frameBlock(7, 0, frame7Field)),
+                "Frame 7: V*@^ at rows 4-6 after R + auto-drop, score 0");
 
-        // ── Frame 8: Final frame after placement + match clearing + gravity ─
-        // DR in Frame 7: D drops to rows 5-7, col 1.
-        // R: blocked (col 2, row 7 has ^). Auto-drop: can't → stationary.
-        // Placed: (5,1)=*, (6,1)=@, (7,1)=^
-        // Row 7 becomes: . ^ ^ ^ * → 3 matching ^ at cols 1-3 → cleared.
-        // Gravity: * and @ in col 1 drop down 1 row each.
-        // Final: row 7 = ". * . . .", row 8 = ". @ . . *"
+        // Frame 8: final frame after 3 ^ cleared (30 pts) + gravity
         String frame8Field = buildField(
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,
                 EMPTY_ROW,  EMPTY_ROW,  ". * . . .", ". @ . . *");
-        assertTrue(output.contains("Frame 8\n" + frame8Field),
-                "Frame 8: final field after 3 ^ cleared from row 8");
+        assertTrue(output.contains(frameBlock(8, 30, frame8Field)),
+                "Frame 8: final field after clearing, score 30");
 
-        // ── Game Over follows the last frame ─────────────────────────────
-        assertTrue(output.contains("Game Over."),
-                "Game should end after all bricks are placed");
+        // Game Over with final score
+        assertTrue(output.contains("Game Over. Final Score: 30"),
+                "Game should end with final score 30");
 
-        // ── Verify frame count: exactly 8 frames ────────────────────────
         assertTrue(output.contains("Frame 8"), "Should have 8 frames total");
         assertFalse(output.contains("Frame 9"), "Should NOT have a 9th frame");
 
-        // ── Verify prompt appears for each interactive frame (1-7) ───────
         String prompt = "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D):";
         int promptCount = countOccurrences(output, prompt);
         assertEquals(7, promptCount,
@@ -162,19 +138,17 @@ class GameTest {
 
     @Test
     void gameEndsWhenNoBricks() {
-        // No bricks provided: game should end immediately
         String output = runGame("5 8");
-        assertTrue(output.contains("Game Over."));
+        assertTrue(output.contains("Game Over. Final Score: 0"));
     }
 
     @Test
     void gameEndsWhenStartingPositionBlocked() {
-        // Field 3x1, H^*@ won't match (all different symbols), blocking second brick
         String output = runGame(
                 "3 1 H^*@ H***",
-                "D"  // Frame 1: brick at bottom of 1-row field -> stationary
+                "D"
         );
-        assertTrue(output.contains("Game Over."));
+        assertTrue(output.contains("Game Over. Final Score: 0"));
     }
 
     @Test
@@ -183,22 +157,18 @@ class GameTest {
                 "5 3 H^^*",
                 "D"
         );
-
-        assertTrue(output.contains("Game Over."));
-        // Brick dropped to bottom (row 2)
+        assertTrue(output.contains("Game Over. Final Score: 0"));
     }
 
     @Test
     void blankCommandInput() {
-        // Blank input means no commands; brick just drops 1 row each frame
         String output = runGame(
                 "5 4 H^^*",
-                "",  // Frame 1: no commands, drops to row 1
-                "",  // Frame 2: drops to row 2
-                "",  // Frame 3: drops to row 3 (bottom)
-                ""   // Frame 4: can't drop further -> stationary
+                "",  // Frame 1
+                "",  // Frame 2
+                "",  // Frame 3
+                ""   // Frame 4
         );
-
         assertTrue(output.contains("Game Over."));
     }
 
@@ -216,13 +186,11 @@ class GameTest {
 
     @Test
     void twoBricksWithMatchClearing() {
-        // 3-wide field, both H bricks fill the same row → match clears
         String output = runGame(
                 "3 3 H^^^ H^^^",
                 "D",
                 "D"
         );
-
         assertTrue(output.contains("Game Over."));
     }
 
@@ -234,7 +202,7 @@ class GameTest {
         );
 
         assertTrue(output.contains("Frame 1"));
-        assertTrue(output.contains("Frame 2")); // final frame
+        assertTrue(output.contains("Frame 2"));
         assertFalse(output.contains("Frame 3"));
         assertTrue(output.contains("Game Over."));
     }
@@ -253,26 +221,23 @@ class GameTest {
 
     @Test
     void multipleBricksStackOnField() {
-        // Two bricks dropped into same column, second stacks on first
         String output = runGame(
                 "5 8 H^^* H^^*",
                 "D",
                 "D"
         );
-
         assertTrue(output.contains("Game Over."));
     }
 
     @Test
     void brickImmediatelyStationaryOnSingleRowField() {
-        // Field height = 1: horizontal brick spawns and can't drop
         String output = runGame(
                 "3 1 H^*@",
                 ""
         );
 
         assertTrue(output.contains("Frame 1"));
-        assertTrue(output.contains("Frame 2")); // final frame
+        assertTrue(output.contains("Frame 2"));
         assertTrue(output.contains("Game Over."));
     }
 
@@ -282,18 +247,15 @@ class GameTest {
                 "3 3 V^^^",
                 ""
         );
-
         assertTrue(output.contains("Game Over."));
     }
 
     @Test
     void secondBrickBlockedByFirst() {
-        // H^*@ on a 3x1 field fills the only row. Second brick can't spawn.
         String output = runGame(
                 "3 1 H^*@ H~~~",
                 ""
         );
-
         assertTrue(output.contains("Game Over."));
     }
 
@@ -301,43 +263,34 @@ class GameTest {
     void moveLeftThenDropPlacesBrickAtLeftEdge() {
         String output = runGame(
                 "5 3 H^^*",
-                "LL",  // move to col 0
+                "LL",
                 "D"
         );
-
         assertTrue(output.contains("Game Over."));
-        // Final frame should show brick at bottom-left
-        String bottomRow = ". . . . .";
-        String brickRow = "^ ^ * . .";
-        assertTrue(output.contains("| " + brickRow + " |"));
+        assertTrue(output.contains("| ^ ^ * . . |"));
     }
 
     @Test
     void moveRightThenDropPlacesBrickAtRightEdge() {
         String output = runGame(
                 "5 3 H^^*",
-                "RR",  // move from col 1 to col 2 (max right for 5-wide)
+                "RR",
                 "D"
         );
-
         assertTrue(output.contains("Game Over."));
-        String brickRow = ". . ^ ^ *";
-        assertTrue(output.contains("| " + brickRow + " |"));
+        assertTrue(output.contains("| . . ^ ^ * |"));
     }
 
     @Test
     void matchClearingHorizontalThreeInRow() {
-        // 3-wide field, drop H^^^ → fills entire bottom row → clears
+        // 3-wide field, drop H^^^ → fills entire bottom row → clears → 30 pts
         String output = runGame(
                 "3 3 H^^^",
                 "D"
         );
-
-        assertTrue(output.contains("Game Over."));
-        // Final frame: bottom row should be cleared
-        String clearedRow = ". . .";
+        assertTrue(output.contains("Game Over. Final Score: 30"));
         String finalFrame = output.substring(output.lastIndexOf("Frame"));
-        assertTrue(finalFrame.contains("| " + clearedRow + " |"));
+        assertTrue(finalFrame.contains("| . . . |"));
     }
 
     @Test
@@ -349,13 +302,54 @@ class GameTest {
 
     @Test
     void fiveBricksMaximum() {
-        // Provide 5 bricks on a large field, all should be processed
         String output = runGame(
                 "5 10 H^^* H*** H~~~ H@@@ H^^^",
                 "D", "D", "D", "D", "D"
         );
-
         assertTrue(output.contains("Game Over."));
-        assertTrue(output.contains("Frame 6")); // 5 interactive frames + 1 final
+        assertTrue(output.contains("Frame 6"));
+    }
+
+    // ── Scoring integration tests ──────────────────────────────────────
+
+    @Test
+    void scoreDisplayedInEveryFrame() {
+        String output = runGame(
+                "5 3 H^^*",
+                "D"
+        );
+        assertTrue(output.contains("Score: 0"), "Score line should appear in frames");
+    }
+
+    @Test
+    void finalScoreZeroWhenNoMatches() {
+        String output = runGame(
+                "5 8 H^^*",
+                "D"
+        );
+        assertTrue(output.contains("Game Over. Final Score: 0"));
+    }
+
+    @Test
+    void finalScoreReflectsMatchPoints() {
+        // H^^^ on a 3-wide field → 3 cells cleared, chain 1 → 3*10*1 = 30
+        String output = runGame(
+                "3 3 H^^^",
+                "D"
+        );
+        assertTrue(output.contains("Game Over. Final Score: 30"));
+    }
+
+    @Test
+    void scoreAccumulatesAcrossMultipleBricks() {
+        // 3x3 field. Brick 1: H^^^ drops → matches (30 pts, cleared).
+        // Brick 2: H^^^ drops to same spot → matches again (30 pts).
+        // Total = 60.
+        String output = runGame(
+                "3 3 H^^^ H^^^",
+                "D",
+                "D"
+        );
+        assertTrue(output.contains("Game Over. Final Score: 60"));
     }
 }

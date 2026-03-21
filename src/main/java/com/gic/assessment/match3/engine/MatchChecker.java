@@ -14,31 +14,41 @@ import com.gic.assessment.match3.model.Field;
 public class MatchChecker {
 
     private static final int MIN_RUN_LENGTH = 3;
+    static final int POINTS_PER_CELL = 10;
+
+    /**
+     * Holds the result of a full match-clear-gravity cycle.
+     *
+     * @param totalCleared total number of cells cleared across all chain levels
+     * @param score        points earned: sum of (cells * POINTS_PER_CELL * chainLevel) per chain
+     */
+    public record ScoreResult(int totalCleared, int score) {}
 
     /**
      * Repeatedly scans for matches, clears them, and applies gravity
      * until no further matches exist (resolving chain reactions).
      *
-     * Each iteration:
-     *   1. Scan for horizontal and vertical runs of 3+.
-     *   2. Clear all matched cells simultaneously.
-     *   3. Apply gravity so floating symbols drop down.
-     *   4. If any cells were cleared, repeat (new matches may have formed).
+     * Scoring: each chain level earns {@code cleared * POINTS_PER_CELL * chainLevel}.
+     * Chain 1 (initial match) = 1x, chain 2 (first cascade) = 2x, etc.
      *
      * @param field the game field to check and modify
-     * @return the total number of cells cleared across all iterations
+     * @return a {@link ScoreResult} with the total cleared count and score
      */
-    public static int checkAndClear(Field field) {
+    public static ScoreResult checkAndClear(Field field) {
         int totalCleared = 0;
+        int totalScore = 0;
+        int chainLevel = 0;
         int cleared;
         do {
             cleared = singlePassClear(field);
             if (cleared > 0) {
+                chainLevel++;
+                totalScore += cleared * POINTS_PER_CELL * chainLevel;
                 field.applyGravity();
             }
             totalCleared += cleared;
         } while (cleared > 0);
-        return totalCleared;
+        return new ScoreResult(totalCleared, totalScore);
     }
 
     /**

@@ -69,8 +69,8 @@ class PdfExampleTraceTest {
         assertEquals('*', field.getCell(7, 4));
 
         // No matches yet (only 2 ^ horizontally)
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(0, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(0, result.totalCleared());
     }
 
     @Test
@@ -148,8 +148,8 @@ class PdfExampleTraceTest {
         assertEquals('^', field.getCell(7, 3));
         assertEquals('*', field.getCell(7, 4));
 
-        int cleared = MatchChecker.checkAndClear(field);
-        assertEquals(3, cleared);
+        var result = MatchChecker.checkAndClear(field);
+        assertEquals(3, result.totalCleared());
 
         // After clearing + gravity: * and @ in col 1 drop down 1 row
         assertEquals(Field.EMPTY, field.getCell(5, 1));
