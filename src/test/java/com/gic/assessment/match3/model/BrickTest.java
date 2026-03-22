@@ -79,6 +79,32 @@ class BrickTest {
     }
 
     @Test
+    void rotatedFlipsOrientation() {
+        Brick h = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        Brick v = h.rotated();
+        assertTrue(v.isVertical());
+        assertEquals('^', v.symbolAt(0));
+        assertEquals('*', v.symbolAt(1));
+        assertEquals('@', v.symbolAt(2));
+    }
+
+    @Test
+    void rotatedRoundTrip() {
+        Brick original = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        assertEquals(original, original.rotated().rotated());
+    }
+
+    @Test
+    void rotatedVerticalToHorizontal() {
+        Brick v = new Brick(Orientation.VERTICAL, '~', '^', '*');
+        Brick h = v.rotated();
+        assertTrue(h.isHorizontal());
+        assertEquals('~', h.symbolAt(0));
+        assertEquals('^', h.symbolAt(1));
+        assertEquals('*', h.symbolAt(2));
+    }
+
+    @Test
     void recordEquality() {
         Brick a = new Brick(Orientation.HORIZONTAL, '^', '^', '*');
         Brick b = new Brick(Orientation.HORIZONTAL, '^', '^', '*');

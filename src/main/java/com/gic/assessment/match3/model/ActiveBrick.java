@@ -15,8 +15,8 @@ import java.util.List;
  */
 public class ActiveBrick {
 
-    /** The underlying brick definition (orientation + 3 symbols) */
-    private final Brick brick;
+    /** The underlying brick definition (orientation + 3 symbols). Replaced on rotation. */
+    private Brick brick;
 
     /** Row index of the anchor (top-left) cell — 0 = top of field */
     private int row;
@@ -142,18 +142,42 @@ public class ActiveBrick {
     }
 
     /**
+     * Checks whether the brick can rotate (H↔V) at its current anchor.
+     *
+     * Creates a temporary ActiveBrick with the rotated brick definition at the
+     * same anchor position, then checks whether all three cells are in-bounds
+     * and empty on the field.
+     *
+     * @param field the game field to check against
+     * @return true if the rotation is legal
+     */
+    public boolean canRotate(Field field) {
+        ActiveBrick rotated = new ActiveBrick(brick.rotated(), row, col);
+        return rotated.canPlace(field);
+    }
+
+    /**
+     * Rotates the brick by swapping its orientation (H↔V).
+     * The anchor position (row, col) stays the same.
+     */
+    public void rotate() {
+        brick = brick.rotated();
+    }
+
+    /**
      * Applies a single command to this brick on the given field.
      *
      * LEFT  → move left  if the space is free (canMove with dCol = -1)
      * RIGHT → move right if the space is free (canMove with dCol = +1)
      * DROP  → drop all the way down until blocked
+     * TURN  → rotate H↔V if the rotated position is free
      *
      * If the move would go out of bounds or collide with a placed brick,
      * the command is silently ignored (the brick stays in place).
      *
      * @param command the command to apply (may be null)
      * @param field   the game field used for collision checks
-     * @return true if the command was a recognised type (L/R/D), false if null
+     * @return true if the command was a recognised type, false if null
      */
     public boolean applyCommand(Command command, Field field) {
         if (command == null) {
@@ -166,7 +190,10 @@ public class ActiveBrick {
             case RIGHT -> {
                 if (canMove(field, 0, 1)) moveRight();
             }
-            case DROP -> drop(field); // fall as far as possible
+            case DROP -> drop(field);
+            case TURN -> {
+                if (canRotate(field)) rotate();
+            }
         }
         return true;
     }

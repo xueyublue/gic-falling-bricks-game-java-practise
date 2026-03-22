@@ -400,4 +400,152 @@ class ActiveBrickTest {
         List<Position> cells = active.getOccupiedCells();
         assertThrows(UnsupportedOperationException.class, () -> cells.add(new Position(9, 9)));
     }
+
+    // ── Rotation tests ─────────────────────────────────────────────────
+
+    @Test
+    void rotateHorizontalToVertical() {
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+
+        assertTrue(active.canRotate(field));
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isVertical());
+        assertEquals(0, active.getRow());
+        assertEquals(1, active.getCol());
+
+        List<Position> cells = active.getOccupiedCells();
+        assertEquals(new Position(0, 1), cells.get(0));
+        assertEquals(new Position(1, 1), cells.get(1));
+        assertEquals(new Position(2, 1), cells.get(2));
+    }
+
+    @Test
+    void rotateVerticalToHorizontal() {
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.VERTICAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+
+        assertTrue(active.canRotate(field));
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isHorizontal());
+
+        List<Position> cells = active.getOccupiedCells();
+        assertEquals(new Position(0, 1), cells.get(0));
+        assertEquals(new Position(0, 2), cells.get(1));
+        assertEquals(new Position(0, 3), cells.get(2));
+    }
+
+    @Test
+    void rotatePreservesSymbols() {
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '~', '^', '*');
+        ActiveBrick active = new ActiveBrick(brick, 0, 0);
+
+        active.applyCommand(Command.TURN, field);
+        assertEquals('~', active.getSymbolAt(0));
+        assertEquals('^', active.getSymbolAt(1));
+        assertEquals('*', active.getSymbolAt(2));
+    }
+
+    @Test
+    void rotateBlockedByRightWall() {
+        // V→H at col 3 on a 5-wide field: needs cols 3,4,5 but col 5 is out of bounds
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.VERTICAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 0, 3);
+
+        assertFalse(active.canRotate(field));
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isVertical());
+    }
+
+    @Test
+    void rotateBlockedByBottomWall() {
+        // H→V at row 6 on an 8-tall field: needs rows 6,7,8 but row 8 is out of bounds
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 6, 1);
+
+        assertFalse(active.canRotate(field));
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isHorizontal());
+    }
+
+    @Test
+    void rotateBlockedByExistingBrick() {
+        // H→V blocked because cell below anchor is occupied
+        Field field = new Field(5, 8);
+        field.setCell(1, 1, '*');
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+
+        assertFalse(active.canRotate(field));
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isHorizontal());
+    }
+
+    @Test
+    void rotateRoundTrip() {
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isVertical());
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isHorizontal());
+        assertEquals(0, active.getRow());
+        assertEquals(1, active.getCol());
+    }
+
+    @Test
+    void rotateThenDrop() {
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isVertical());
+        active.applyCommand(Command.DROP, field);
+        assertEquals(5, active.getRow());
+    }
+
+    @Test
+    void rotateAtExactBottomEdge() {
+        // H→V at row 5 on 8-tall: needs rows 5,6,7 — just fits
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 5, 1);
+
+        assertTrue(active.canRotate(field));
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isVertical());
+    }
+
+    @Test
+    void rotateAtExactRightEdge() {
+        // V→H at col 2 on 5-wide: needs cols 2,3,4 — just fits
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.VERTICAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 0, 2);
+
+        assertTrue(active.canRotate(field));
+        active.applyCommand(Command.TURN, field);
+        assertTrue(active.getBrick().isHorizontal());
+    }
+
+    @Test
+    void rotatePlaceOnFieldUsesNewOrientation() {
+        Field field = new Field(5, 8);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 5, 1);
+
+        active.applyCommand(Command.TURN, field);
+        active.placeOnField(field);
+        assertEquals('^', field.getCell(5, 1));
+        assertEquals('*', field.getCell(6, 1));
+        assertEquals('@', field.getCell(7, 1));
+    }
 }

@@ -27,7 +27,7 @@ public class Game {
     private static final String INIT_PROMPT =
             "Please enter field size (width and height) and up to 5 bricks set:";
     private static final String COMMAND_PROMPT =
-            "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D):";
+            "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D, T):";
     private static final String GAME_OVER = "Game Over.";
 
     /** Reads user input from the console */

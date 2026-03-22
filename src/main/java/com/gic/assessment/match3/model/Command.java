@@ -6,16 +6,18 @@ package com.gic.assessment.match3.model;
  * LEFT  — move the brick one column to the left.
  * RIGHT — move the brick one column to the right.
  * DROP  — drop the brick as far down as possible in one step.
+ * TURN  — rotate the brick (H↔V) if the rotated position is free.
  */
 public enum Command {
     LEFT,
     RIGHT,
-    DROP;
+    DROP,
+    TURN;
 
     /**
      * Converts a character to the corresponding Command.
      *
-     * @param c 'L' for LEFT, 'R' for RIGHT, 'D' for DROP (case-insensitive)
+     * @param c 'L' for LEFT, 'R' for RIGHT, 'D' for DROP, 'T' for TURN (case-insensitive)
      * @return the matching Command, or null if the character is not a valid command
      */
     public static Command fromChar(char c) {
@@ -23,7 +25,8 @@ public enum Command {
             case 'L' -> LEFT;
             case 'R' -> RIGHT;
             case 'D' -> DROP;
-            default -> null; // invalid characters are silently ignored
+            case 'T' -> TURN;
+            default -> null;
         };
     }
 }

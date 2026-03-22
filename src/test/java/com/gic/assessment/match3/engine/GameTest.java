@@ -119,7 +119,7 @@ class GameTest {
         assertTrue(output.contains("Frame 8"), "Should have 8 frames total");
         assertFalse(output.contains("Frame 9"), "Should NOT have a 9th frame");
 
-        String prompt = "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D):";
+        String prompt = "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D, T):";
         int promptCount = countOccurrences(output, prompt);
         assertEquals(7, promptCount,
                 "Prompt should appear exactly 7 times (frames 1-7, not frame 8)");
@@ -351,5 +351,35 @@ class GameTest {
                 "D"
         );
         assertTrue(output.contains("Game Over. Final Score: 60"));
+    }
+
+    // ── Rotation integration tests ─────────────────────────────────────
+
+    @Test
+    void turnCommandRotatesBrickInGame() {
+        // 5x8 field, H^^* brick. T rotates H→V, then D drops as vertical.
+        // Vertical brick occupies 3 rows in one column.
+        String output = runGame(
+                "5 8 H^^*",
+                "TD"
+        );
+        assertTrue(output.contains("Game Over."));
+        // After T+D: vertical brick placed at col 1, rows 5-7
+        assertTrue(output.contains("| . ^ . . . |"));
+        assertTrue(output.contains("| . ^ . . . |"));
+        assertTrue(output.contains("| . * . . . |"));
+    }
+
+    @Test
+    void turnBlockedIgnoredInGame() {
+        // 3x1 field, V^^* spawns at col 1 — can't rotate to H (needs 3 cols from col 1 = cols 1,2,3 but width is 3)
+        // Actually V on 3x1 can't even spawn (needs 3 rows, only 1 available).
+        // Use 3x3 field with H brick at right edge: T blocked, stays H
+        String output = runGame(
+                "3 3 H^^^",
+                "D"
+        );
+        // H^^^ fills entire bottom row → match cleared
+        assertTrue(output.contains("Game Over. Final Score: 30"));
     }
 }

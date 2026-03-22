@@ -123,6 +123,21 @@ class InputParserTest {
     }
 
     @Test
+    void parseCommandsTurn() {
+        List<Command> cmds = InputParser.parseCommands("TL");
+        assertEquals(2, cmds.size());
+        assertEquals(Command.TURN, cmds.get(0));
+        assertEquals(Command.LEFT, cmds.get(1));
+    }
+
+    @Test
+    void parseCommandsTurnLowercase() {
+        List<Command> cmds = InputParser.parseCommands("t");
+        assertEquals(1, cmds.size());
+        assertEquals(Command.TURN, cmds.get(0));
+    }
+
+    @Test
     void parseCommandsAllInvalidChars() {
         List<Command> cmds = InputParser.parseCommands("XYZ123");
         assertTrue(cmds.isEmpty());

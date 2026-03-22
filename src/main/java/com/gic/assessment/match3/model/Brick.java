@@ -70,6 +70,17 @@ public record Brick(Orientation orientation, char symbol1, char symbol2, char sy
     }
 
     /**
+     * Returns a new Brick with the orientation flipped (H↔V),
+     * keeping the same symbols in the same order.
+     *
+     * @return a rotated copy of this brick
+     */
+    public Brick rotated() {
+        Orientation flipped = isHorizontal() ? Orientation.VERTICAL : Orientation.HORIZONTAL;
+        return new Brick(flipped, symbol1, symbol2, symbol3);
+    }
+
+    /**
      * Returns a human-readable string such as "H^^*" or "V*@^".
      * The first character is the orientation letter, followed by the three symbols.
      */

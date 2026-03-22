@@ -11,6 +11,7 @@ class CommandTest {
         assertEquals(Command.LEFT, Command.fromChar('L'));
         assertEquals(Command.RIGHT, Command.fromChar('R'));
         assertEquals(Command.DROP, Command.fromChar('D'));
+        assertEquals(Command.TURN, Command.fromChar('T'));
     }
 
     @Test
@@ -18,6 +19,7 @@ class CommandTest {
         assertEquals(Command.LEFT, Command.fromChar('l'));
         assertEquals(Command.RIGHT, Command.fromChar('r'));
         assertEquals(Command.DROP, Command.fromChar('d'));
+        assertEquals(Command.TURN, Command.fromChar('t'));
     }
 
     @Test
