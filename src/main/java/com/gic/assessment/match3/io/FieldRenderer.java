@@ -1,6 +1,7 @@
 package com.gic.assessment.match3.io;
 
 import com.gic.assessment.match3.model.ActiveBrick;
+import com.gic.assessment.match3.model.Brick;
 import com.gic.assessment.match3.model.Field;
 import com.gic.assessment.match3.model.Position;
 
@@ -28,6 +29,16 @@ public class FieldRenderer {
      * @return a multi-line string ready to be printed to the console
      */
     public static String render(Field field, ActiveBrick activeBrick) {
+        return render(field, activeBrick, null);
+    }
+
+    /**
+     * Same as {@link #render(Field, ActiveBrick)} but optionally appends a small
+     * ASCII preview of the next brick (any shape) below the field.
+     *
+     * @param nextBrick brick queued to spawn after the current one, or null to omit
+     */
+    public static String render(Field field, ActiveBrick activeBrick, Brick nextBrick) {
         // Build a 2D char array that merges the field grid + active brick
         char[][] display = buildDisplayGrid(field, activeBrick);
 
@@ -57,6 +68,43 @@ public class FieldRenderer {
 
             // Newline between rows, but not after the very last row
             if (row < field.getHeight() - 1) {
+                sb.append('\n');
+            }
+        }
+
+        if (nextBrick != null) {
+            sb.append("\n\nNext:\n");
+            sb.append(renderBrickMini(nextBrick));
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Renders a brick in its bounding box using '.' for empty cells within the box.
+     */
+    static String renderBrickMini(Brick brick) {
+        int h = brick.boundingHeight();
+        int w = brick.boundingWidth();
+        char[][] grid = new char[h][w];
+        for (int r = 0; r < h; r++) {
+            for (int c = 0; c < w; c++) {
+                grid[r][c] = '.';
+            }
+        }
+        for (int i = 0; i < brick.cellCount(); i++) {
+            Position off = brick.relativeOffset(i);
+            grid[off.row()][off.col()] = brick.symbolAt(i);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int r = 0; r < h; r++) {
+            for (int c = 0; c < w; c++) {
+                if (c > 0) {
+                    sb.append(' ');
+                }
+                sb.append(grid[r][c]);
+            }
+            if (r < h - 1) {
                 sb.append('\n');
             }
         }

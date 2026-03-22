@@ -31,6 +31,30 @@ class ActiveBrickTest {
     }
 
     @Test
+    void lShapeStartPositionCentredByBoundingWidth() {
+        Field wide = new Field(7, 8);
+        Brick brick = Brick.lShape('^', '^', '*', '@');
+        ActiveBrick active = ActiveBrick.createAtStart(brick, wide);
+
+        assertNotNull(active);
+        assertEquals(0, active.getRow());
+        assertEquals(2, active.getCol()); // (7-2)/2 = 2
+    }
+
+    @Test
+    void lShapeOccupiedCellsMatchOffsets() {
+        Brick brick = Brick.lShape('^', '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 1, 2);
+        assertEquals(
+                List.of(
+                        new Position(1, 2),
+                        new Position(2, 2),
+                        new Position(3, 2),
+                        new Position(3, 3)),
+                active.getOccupiedCells());
+    }
+
+    @Test
     void horizontalBrickOccupiedCells() {
         Brick brick = new Brick(Orientation.HORIZONTAL, '^', '^', '*');
         ActiveBrick active = new ActiveBrick(brick, 0, 1);

@@ -75,6 +75,39 @@ class InputParserTest {
     void parseBrickInvalidLength() {
         assertThrows(IllegalArgumentException.class, () -> InputParser.parseBrick("H^^"));
         assertThrows(IllegalArgumentException.class, () -> InputParser.parseBrick("H^^**"));
+        assertThrows(IllegalArgumentException.class, () -> InputParser.parseBrick("L^^^"));
+        assertThrows(IllegalArgumentException.class, () -> InputParser.parseBrick("H^^^^"));
+    }
+
+    @Test
+    void parseBrickLShape() {
+        Brick b = InputParser.parseBrick("L^^*@");
+        assertEquals(Brick.Kind.L_SHAPE, b.kind());
+        assertEquals(4, b.cellCount());
+        assertEquals("L^^*@", b.toString());
+    }
+
+    @Test
+    void parseBrickTShape() {
+        Brick b = InputParser.parseBrick("T*@^~");
+        assertEquals(Brick.Kind.T_SHAPE, b.kind());
+        assertEquals("T*@^~", b.toString());
+    }
+
+    @Test
+    void parseBrickSquare() {
+        Brick b = InputParser.parseBrick("Q^*@~");
+        assertEquals(Brick.Kind.SQUARE_2X2, b.kind());
+        assertEquals(2, b.boundingWidth());
+    }
+
+    @Test
+    void parseInitInputMixedBrickShapes() {
+        InputParser.GameConfig config = InputParser.parseInitInput("6 8 H^^* L**@^ Q^^^^");
+        assertEquals(3, config.bricks().size());
+        assertTrue(config.bricks().get(0).isHorizontal());
+        assertEquals(Brick.Kind.L_SHAPE, config.bricks().get(1).kind());
+        assertEquals(Brick.Kind.SQUARE_2X2, config.bricks().get(2).kind());
     }
 
     @Test

@@ -130,4 +130,24 @@ class FieldRendererTest {
         String rendered = FieldRenderer.render(field, null);
         assertFalse(rendered.endsWith("\n"));
     }
+
+    @Test
+    void renderWithNextBrickAppendsMiniPreview() {
+        Field field = new Field(3, 3);
+        Brick next = Brick.tShape('*', '@', '^', '~');
+        String rendered = FieldRenderer.render(field, null, next);
+        assertTrue(rendered.contains("\n\nNext:\n"));
+        assertTrue(rendered.endsWith("@ ^ ~")); // bottom row of mini T (3 cells wide)
+        assertTrue(rendered.contains(". * ."));
+    }
+
+    @Test
+    void renderLShapeOnField() {
+        Field field = new Field(5, 4);
+        Brick brick = Brick.lShape('^', '^', '*', '@');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+        String rendered = FieldRenderer.render(field, active);
+        assertTrue(rendered.contains("| . ^ . . . |"));
+        assertTrue(rendered.contains("| . * @ . . |"));
+    }
 }

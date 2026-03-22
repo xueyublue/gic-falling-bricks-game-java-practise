@@ -35,7 +35,8 @@ public class InputParser {
      *
      * - The first token  is the field width.
      * - The second token is the field height.
-     * - Each subsequent token is a 4-character brick definition (e.g. "H^^*").
+     * - Each subsequent token is a brick: 4 chars ({@code H}/{@code V} + 3 symbols) or
+     *   5 chars ({@code L}/{@code T}/{@code Q} + 4 symbols).
      * - At most 5 bricks are accepted; any extras are ignored.
      *
      * @param input the raw input line from the user
@@ -72,25 +73,44 @@ public class InputParser {
     }
 
     /**
-     * Parses a single 4-character brick token.
+     * Parses a single brick token.
      *
-     * Format: first char = orientation ('H' or 'V'),
-     *         next 3 chars = the three block symbols.
-     * Example: "H^^*" → Horizontal brick with symbols ^, ^, *
-     *          "V*@^" → Vertical   brick with symbols *, @, ^
+     * <ul>
+     *   <li>4 characters: {@code H} or {@code V} + 3 symbols (line brick).</li>
+     *   <li>5 characters: {@code L}, {@code T}, or {@code Q} + 4 symbols (L, T, or 2×2 square).</li>
+     * </ul>
      *
-     * @param token the 4-character brick string
+     * @param token the brick string
      * @return a new Brick constructed from the token
-     * @throws IllegalArgumentException if the token length is not 4
+     * @throws IllegalArgumentException if the token is null or malformed
      */
     public static Brick parseBrick(String token) {
-        if (token == null || token.length() != 4) {
-            throw new IllegalArgumentException(
-                    "Brick must be exactly 4 characters (orientation + 3 symbols): " + token);
+        if (token == null) {
+            throw new IllegalArgumentException("Brick token cannot be null");
         }
-        // char 0 → orientation, chars 1-3 → symbols
-        Orientation orientation = Orientation.fromChar(token.charAt(0));
-        return new Brick(orientation, token.charAt(1), token.charAt(2), token.charAt(3));
+        int len = token.length();
+        char type = Character.toUpperCase(token.charAt(0));
+
+        if (len == 4 && (type == 'H' || type == 'V')) {
+            Orientation orientation = Orientation.fromChar(type);
+            return new Brick(orientation, token.charAt(1), token.charAt(2), token.charAt(3));
+        }
+
+        if (len == 5 && (type == 'L' || type == 'T' || type == 'Q')) {
+            char s0 = token.charAt(1);
+            char s1 = token.charAt(2);
+            char s2 = token.charAt(3);
+            char s3 = token.charAt(4);
+            return switch (type) {
+                case 'L' -> Brick.lShape(s0, s1, s2, s3);
+                case 'T' -> Brick.tShape(s0, s1, s2, s3);
+                case 'Q' -> Brick.square2x2(s0, s1, s2, s3);
+                default -> throw new IllegalStateException();
+            };
+        }
+
+        throw new IllegalArgumentException(
+                "Invalid brick token (expected H/V + 3 symbols or L/T/Q + 4 symbols): " + token);
     }
 
     /**

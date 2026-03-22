@@ -6,16 +6,15 @@ import java.util.List;
  * Represents a brick that is currently "in play" — actively falling on the field.
  *
  * The brick's position is tracked by an anchor point (row, col), which is the
- * top-left cell of the brick:
- *   Horizontal brick → occupies (row, col), (row, col+1), (row, col+2)
- *   Vertical   brick → occupies (row, col), (row+1, col), (row+2, col)
+ * top-left corner of the brick's bounding box. Each cell is
+ * {@code (row + offset.row(), col + offset.col())} for the brick's relative offsets.
  *
  * Once the brick can no longer move down, it becomes "stationary" and its
  * symbols are written permanently onto the Field via {@link #placeOnField}.
  */
 public class ActiveBrick {
 
-    /** The underlying brick definition (orientation + 3 symbols) */
+    /** The underlying brick definition (offsets + symbols) */
     private final Brick brick;
 
     /** Row index of the anchor (top-left) cell — 0 = top of field */
@@ -51,28 +50,17 @@ public class ActiveBrick {
     }
 
     /**
-     * Computes the three grid positions this brick currently occupies,
-     * based on its anchor position and orientation.
+     * Computes the grid positions this brick currently occupies from the anchor
+     * and the brick's relative offsets.
      *
-     * @return an immutable list of three {@link Position} values
+     * @return an immutable list of positions (same order as {@link Brick#symbolAt(int)})
      */
     public List<Position> getOccupiedCells() {
-        if (brick.isHorizontal()) {
-            // Horizontal: same row, columns shift right
-            return List.of(
-                    new Position(row, col),
-                    new Position(row, col + 1),
-                    new Position(row, col + 2));
-        }
-        // Vertical: same column, rows shift down
-        return List.of(
-                new Position(row, col),
-                new Position(row + 1, col),
-                new Position(row + 2, col));
+        return brick.absoluteCells(row, col);
     }
 
     /**
-     * Returns the symbol character at the given positional index (0, 1, or 2).
+     * Returns the symbol character at the given cell index.
      * Delegates to the underlying Brick.
      *
      * @param cellIndex 0-based index matching the order in getOccupiedCells()
@@ -89,7 +77,7 @@ public class ActiveBrick {
      * Used when spawning a new brick to verify the starting position is free.
      *
      * @param field the game field to check against
-     * @return true if all three cells are in-bounds and empty
+     * @return true if all cells are in-bounds and empty
      */
     public boolean canPlace(Field field) {
         for (Position pos : getOccupiedCells()) {
@@ -185,7 +173,7 @@ public class ActiveBrick {
     }
 
     /**
-     * Writes this brick's three symbols onto the field grid, making
+     * Writes this brick's symbols onto the field grid, making
      * the brick "stationary" (permanent).  After this call the cells
      * are occupied and will block future bricks.
      *
@@ -205,10 +193,8 @@ public class ActiveBrick {
      *
      * Starting position rules:
      *   - The brick always starts at row 0 (the very top).
-     *   - Horizontal: centred using (fieldWidth - 3) / 2 so the 3-wide
-     *     brick sits in the middle columns.
-     *   - Vertical: centred using (fieldWidth - 1) / 2 so the 1-wide
-     *     brick sits in the middle column.
+     *   - Horizontally centred using {@code (fieldWidth - boundingWidth) / 2}
+     *     so the brick's bounding box sits in the middle columns.
      *
      * If the starting cells are already occupied (blocked by previously
      * placed bricks), returns null — the game should end.
@@ -219,13 +205,11 @@ public class ActiveBrick {
      */
     public static ActiveBrick createAtStart(Brick brick, Field field) {
         int startRow = 0; // always spawn at the top row
-        int startCol = brick.isHorizontal()
-                ? (field.getWidth() - 3) / 2   // centre a 3-column-wide brick
-                : (field.getWidth() - 1) / 2;  // centre a 1-column-wide brick
+        int startCol = (field.getWidth() - brick.boundingWidth()) / 2;
 
         ActiveBrick active = new ActiveBrick(brick, startRow, startCol);
 
-        // If any of the three starting cells are blocked, the brick cannot spawn
+        // If any starting cells are blocked, the brick cannot spawn
         return active.canPlace(field) ? active : null;
     }
 }
