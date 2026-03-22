@@ -357,4 +357,16 @@ class GameTest {
         assertTrue(output.contains("Game Over."));
         assertTrue(output.contains("Frame 6")); // 5 interactive frames + 1 final
     }
+
+    @Test
+    void matchLength4DoesNotClearThreeInARow() {
+        // 3-wide bottom row H^^^ is only 3 symbols — match-4 leaves them on the field
+        String output = runGame(
+                "3 3 4 H^^^",
+                "D"
+        );
+        assertTrue(output.contains("Game Over."));
+        String finalFrame = output.substring(output.lastIndexOf("Frame"));
+        assertTrue(finalFrame.contains("| ^ ^ ^ |"));
+    }
 }

@@ -1,5 +1,6 @@
 package com.gic.assessment.match3.io;
 
+import com.gic.assessment.match3.engine.MatchChecker;
 import com.gic.assessment.match3.model.Brick;
 import com.gic.assessment.match3.model.Command;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ class InputParserTest {
         InputParser.GameConfig config = InputParser.parseInitInput("5 8 H^^* V*@^");
         assertEquals(5, config.width());
         assertEquals(8, config.height());
+        assertEquals(MatchChecker.DEFAULT_MIN_RUN_LENGTH, config.minMatchLength());
         assertEquals(2, config.bricks().size());
 
         Brick first = config.bricks().get(0);
@@ -35,6 +37,7 @@ class InputParserTest {
         InputParser.GameConfig config = InputParser.parseInitInput("10 10");
         assertEquals(10, config.width());
         assertEquals(10, config.height());
+        assertEquals(MatchChecker.DEFAULT_MIN_RUN_LENGTH, config.minMatchLength());
         assertTrue(config.bricks().isEmpty());
     }
 
@@ -50,6 +53,7 @@ class InputParserTest {
         InputParser.GameConfig config = InputParser.parseInitInput("  5  8  H^^*  ");
         assertEquals(5, config.width());
         assertEquals(8, config.height());
+        assertEquals(MatchChecker.DEFAULT_MIN_RUN_LENGTH, config.minMatchLength());
         assertEquals(1, config.bricks().size());
     }
 
@@ -218,6 +222,44 @@ class InputParserTest {
         InputParser.GameConfig config = InputParser.parseInitInput("1 1");
         assertEquals(1, config.width());
         assertEquals(1, config.height());
+        assertEquals(MatchChecker.DEFAULT_MIN_RUN_LENGTH, config.minMatchLength());
         assertTrue(config.bricks().isEmpty());
+    }
+
+    @Test
+    void parseInitInputWithMatchLength4() {
+        InputParser.GameConfig config = InputParser.parseInitInput("5 8 4 H^^* V*@^");
+        assertEquals(5, config.width());
+        assertEquals(8, config.height());
+        assertEquals(4, config.minMatchLength());
+        assertEquals(2, config.bricks().size());
+    }
+
+    @Test
+    void parseInitInputWithMatchLength5NoBricks() {
+        InputParser.GameConfig config = InputParser.parseInitInput("6 6 5");
+        assertEquals(6, config.width());
+        assertEquals(6, config.height());
+        assertEquals(5, config.minMatchLength());
+        assertTrue(config.bricks().isEmpty());
+    }
+
+    @Test
+    void parseInitInputMatchLength2() {
+        InputParser.GameConfig config = InputParser.parseInitInput("4 4 2 H^^*");
+        assertEquals(2, config.minMatchLength());
+        assertEquals(1, config.bricks().size());
+    }
+
+    @Test
+    void parseInitInputMatchLengthOneThrows() {
+        assertThrows(IllegalArgumentException.class,
+                () -> InputParser.parseInitInput("5 8 1 H^^*"));
+    }
+
+    @Test
+    void parseInitInputMatchLengthZeroThrows() {
+        assertThrows(IllegalArgumentException.class,
+                () -> InputParser.parseInitInput("5 8 0 H^^*"));
     }
 }

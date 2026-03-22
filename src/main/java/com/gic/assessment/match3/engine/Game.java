@@ -25,7 +25,7 @@ import java.util.Scanner;
 public class Game {
 
     private static final String INIT_PROMPT =
-            "Please enter field size (width and height) and up to 5 bricks set:";
+            "Please enter field size (width and height), optional match length (e.g. 4 for match-4), and up to 5 bricks:";
     private static final String COMMAND_PROMPT =
             "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D):";
     private static final String GAME_OVER = "Game Over.";
@@ -50,6 +50,9 @@ public class Game {
 
     /** Monotonically increasing frame counter displayed to the user (1-based) */
     private int frameNumber;
+
+    /** Minimum contiguous same-symbol run to clear (from init, default 3) */
+    private int minMatchLength;
 
     /**
      * @param scanner input source (typically wrapping System.in)
@@ -82,9 +85,10 @@ public class Game {
         InputParser.GameConfig config = InputParser.parseInitInput(input);
 
         field = new Field(config.width(), config.height()); // empty grid
-        bricks = config.bricks();       // ordered list of brick definitions
-        currentBrickIndex = 0;          // start with the first brick
-        frameNumber = 0;                // will be incremented to 1 on the first frame
+        bricks = config.bricks();
+        minMatchLength = config.minMatchLength();
+        currentBrickIndex = 0;
+        frameNumber = 0;
     }
 
     /**
@@ -95,7 +99,7 @@ public class Game {
      *      If the starting cells are blocked → break (game over).
      *   2. Run processBrick() which handles frames until the brick is stationary.
      *   3. Write the brick's symbols onto the field permanently.
-     *   4. Check for and clear any 3-in-a-row matches.
+     *   4. Check for and clear matches (length ≥ minMatchLength from init).
      *   5. Move to the next brick.
      *
      * After all bricks are placed (or a brick could not be spawned),
@@ -117,8 +121,7 @@ public class Game {
             // Brick is now stationary — write its symbols onto the field
             activeBrick.placeOnField(field);
 
-            // Remove any horizontal/vertical runs of 3+ matching symbols
-            MatchChecker.checkAndClear(field);
+            MatchChecker.checkAndClear(field, minMatchLength);
 
             // Advance to the next brick in the list
             currentBrickIndex++;

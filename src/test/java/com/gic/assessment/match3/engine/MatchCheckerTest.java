@@ -276,4 +276,52 @@ class MatchCheckerTest {
         assertEquals(Field.EMPTY, field.getCell(7, 3));
         assertEquals('*', field.getCell(7, 4));
     }
+
+    @Test
+    void match4RequiresFourInARow() {
+        Field field = new Field(5, 5);
+        field.setCell(4, 1, '^');
+        field.setCell(4, 2, '^');
+        field.setCell(4, 3, '^');
+
+        assertEquals(0, MatchChecker.checkAndClear(field, 4));
+        assertEquals('^', field.getCell(4, 1));
+
+        field.setCell(4, 4, '^');
+        assertEquals(4, MatchChecker.checkAndClear(field, 4));
+    }
+
+    @Test
+    void match2ClearsPair() {
+        Field field = new Field(3, 3);
+        field.setCell(2, 0, '*');
+        field.setCell(2, 1, '*');
+
+        assertEquals(2, MatchChecker.checkAndClear(field, 2));
+        assertEquals(Field.EMPTY, field.getCell(2, 0));
+        assertEquals(Field.EMPTY, field.getCell(2, 1));
+    }
+
+    @Test
+    void checkAndClearDefaultSameAsExplicitThree() {
+        Field field = new Field(5, 5);
+        field.setCell(4, 1, '^');
+        field.setCell(4, 2, '^');
+        field.setCell(4, 3, '^');
+
+        Field copy = new Field(5, 5);
+        copy.setCell(4, 1, '^');
+        copy.setCell(4, 2, '^');
+        copy.setCell(4, 3, '^');
+
+        assertEquals(MatchChecker.checkAndClear(field), MatchChecker.checkAndClear(copy, 3));
+    }
+
+    @Test
+    void checkAndClearInvalidMinRunLengthThrows() {
+        Field field = new Field(3, 3);
+        assertThrows(IllegalArgumentException.class, () -> MatchChecker.checkAndClear(field, 1));
+        assertThrows(IllegalArgumentException.class, () -> MatchChecker.checkAndClear(field, 0));
+        assertThrows(IllegalArgumentException.class, () -> MatchChecker.checkAndClear(field, -1));
+    }
 }

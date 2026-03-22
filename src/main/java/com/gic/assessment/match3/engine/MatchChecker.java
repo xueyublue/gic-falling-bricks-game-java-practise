@@ -5,37 +5,39 @@ import com.gic.assessment.match3.model.Field;
 /**
  * Detects and removes "matches" on the field.
  *
- * A match is a horizontal or vertical run of 3 or more consecutive cells
- * containing the same symbol.  All matches are identified first, then
- * removed simultaneously.  Gravity is NOT applied after removal — cleared
- * cells simply become empty ('.').
+ * A match is a horizontal or vertical run of {@code minRunLength} or more
+ * consecutive cells containing the same symbol.  All matches are identified
+ * first, then removed simultaneously.
  */
 public class MatchChecker {
 
-    private static final int MIN_RUN_LENGTH = 3;
+    /** Default minimum run length when not specified (classic match-3). */
+    public static final int DEFAULT_MIN_RUN_LENGTH = 3;
 
     /**
-     * Scans the entire field for horizontal and vertical matches of 3+
-     * identical symbols, then clears (sets to EMPTY) every matched cell.
-     *
-     * Algorithm:
-     *   1. Create a boolean[][] "toRemove" grid, same size as the field.
-     *   2. Scan every row left-to-right for horizontal runs of 3+.
-     *   3. Scan every column top-to-bottom for vertical runs of 3+.
-     *   4. Any cell marked true in toRemove is set to EMPTY on the field.
-     *
-     * All matches are collected before any cells are cleared, so overlapping
-     * matches (e.g. a cross shape) are handled correctly in a single pass.
-     *
-     * @param field the game field to check and modify
-     * @return the total number of cells that were cleared
+     * Same as {@link #checkAndClear(Field, int)} with {@link #DEFAULT_MIN_RUN_LENGTH}.
      */
     public static int checkAndClear(Field field) {
-        // toRemove[row][col] = true means this cell is part of a match
+        return checkAndClear(field, DEFAULT_MIN_RUN_LENGTH);
+    }
+
+    /**
+     * Scans the entire field for horizontal and vertical runs of {@code minRunLength}+
+     * identical symbols, then clears (sets to EMPTY) every matched cell.
+     *
+     * @param field        the game field to check and modify
+     * @param minRunLength minimum contiguous same-symbol cells to count as a match (≥ 2)
+     * @return the total number of cells that were cleared
+     * @throws IllegalArgumentException if {@code minRunLength} is less than 2
+     */
+    public static int checkAndClear(Field field, int minRunLength) {
+        if (minRunLength < 2) {
+            throw new IllegalArgumentException("minRunLength must be at least 2, got: " + minRunLength);
+        }
         boolean[][] toRemove = new boolean[field.getHeight()][field.getWidth()];
 
-        markHorizontalRuns(field, toRemove);
-        markVerticalRuns(field, toRemove);
+        markHorizontalRuns(field, toRemove, minRunLength);
+        markVerticalRuns(field, toRemove, minRunLength);
 
         return clearMarkedCells(field, toRemove);
     }
@@ -44,10 +46,10 @@ public class MatchChecker {
      * Scans every row left-to-right for horizontal runs of identical symbols.
      * Skips ahead past each run to avoid redundant re-scanning.
      */
-    private static void markHorizontalRuns(Field field, boolean[][] toRemove) {
+    private static void markHorizontalRuns(Field field, boolean[][] toRemove, int minRunLength) {
         for (int row = 0; row < field.getHeight(); row++) {
             int col = 0;
-            while (col <= field.getWidth() - MIN_RUN_LENGTH) {
+            while (col <= field.getWidth() - minRunLength) {
                 char symbol = field.getCell(row, col);
                 if (symbol == Field.EMPTY) {
                     col++;
@@ -62,7 +64,7 @@ public class MatchChecker {
                 }
 
                 // If the run is long enough, mark every cell in it for removal
-                if (runLength >= MIN_RUN_LENGTH) {
+                if (runLength >= minRunLength) {
                     for (int k = 0; k < runLength; k++) {
                         toRemove[row][col + k] = true;
                     }
@@ -77,10 +79,10 @@ public class MatchChecker {
      * Scans every column top-to-bottom for vertical runs of identical symbols.
      * Skips ahead past each run to avoid redundant re-scanning.
      */
-    private static void markVerticalRuns(Field field, boolean[][] toRemove) {
+    private static void markVerticalRuns(Field field, boolean[][] toRemove, int minRunLength) {
         for (int col = 0; col < field.getWidth(); col++) {
             int row = 0;
-            while (row <= field.getHeight() - MIN_RUN_LENGTH) {
+            while (row <= field.getHeight() - minRunLength) {
                 char symbol = field.getCell(row, col);
                 if (symbol == Field.EMPTY) {
                     row++;
@@ -95,7 +97,7 @@ public class MatchChecker {
                 }
 
                 // If the run is long enough, mark every cell in it for removal
-                if (runLength >= MIN_RUN_LENGTH) {
+                if (runLength >= minRunLength) {
                     for (int k = 0; k < runLength; k++) {
                         toRemove[row + k][col] = true;
                     }

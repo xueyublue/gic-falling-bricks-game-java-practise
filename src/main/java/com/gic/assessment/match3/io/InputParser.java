@@ -1,5 +1,6 @@
 package com.gic.assessment.match3.io;
 
+import com.gic.assessment.match3.engine.MatchChecker;
 import com.gic.assessment.match3.model.Brick;
 import com.gic.assessment.match3.model.Command;
 import com.gic.assessment.match3.model.Orientation;
@@ -21,40 +22,43 @@ public class InputParser {
     /**
      * Holds the result of parsing the initialisation line.
      *
-     * @param width  number of columns in the field
-     * @param height number of rows in the field
-     * @param bricks list of Brick definitions (up to 5)
+     * @param width          number of columns in the field
+     * @param height         number of rows in the field
+     * @param minMatchLength minimum same-symbol run length to clear (e.g. 3 = match-3)
+     * @param bricks         list of Brick definitions (up to 5)
      */
-    public record GameConfig(int width, int height, List<Brick> bricks) {}
+    public record GameConfig(int width, int height, int minMatchLength, List<Brick> bricks) {}
 
     /**
      * Parses the initialisation line entered by the user.
      *
-     * Expected format: "WIDTH HEIGHT [BRICK1] [BRICK2] ... [BRICK5]"
-     * Example:         "5 8 H^^* V*@^"
+     * Expected format: "WIDTH HEIGHT [MATCH_LEN] [BRICK1] [BRICK2] ... [BRICK5]"
+     * Examples:        "5 8 H^^* V*@^"           — default match length 3
+     *                  "5 8 4 H^^* V*@^"         — match-4
      *
      * - The first token  is the field width.
      * - The second token is the field height.
-     * - Each subsequent token is a 4-character brick definition (e.g. "H^^*").
+     * - If the third token is a positive integer ≥ 2, it is the minimum match length
+     *   (match-3, match-4, …); brick tokens then start at the fourth token.
+     *   Otherwise bricks start at the third token and match length defaults to 3.
+     * - Each brick token is a 4-character definition (e.g. "H^^*").
      * - At most 5 bricks are accepted; any extras are ignored.
      *
      * @param input the raw input line from the user
-     * @return a GameConfig containing the parsed width, height, and brick list
+     * @return a GameConfig containing width, height, min match length, and brick list
      * @throws IllegalArgumentException if the input is blank, missing dimensions,
-     *                                  or contains invalid brick tokens
+     *                                  match length is invalid, or a brick token is invalid
      */
     public static GameConfig parseInitInput(String input) {
         if (input == null || input.isBlank()) {
             throw new IllegalArgumentException("Input cannot be empty");
         }
 
-        // Split on whitespace to extract individual tokens
         String[] tokens = input.trim().split("\\s+");
         if (tokens.length < 2) {
             throw new IllegalArgumentException("Must provide at least width and height");
         }
 
-        // tokens[0] = width, tokens[1] = height
         int width = Integer.parseInt(tokens[0]);
         int height = Integer.parseInt(tokens[1]);
 
@@ -62,13 +66,40 @@ public class InputParser {
             throw new IllegalArgumentException("Width and height must be positive");
         }
 
-        // Remaining tokens are brick definitions; collect up to MAX_BRICKS
+        int brickIndex = 2;
+        int minMatchLength = MatchChecker.DEFAULT_MIN_RUN_LENGTH;
+
+        if (tokens.length > 2 && isMatchLengthToken(tokens[2])) {
+            minMatchLength = Integer.parseInt(tokens[2]);
+            if (minMatchLength < 2) {
+                throw new IllegalArgumentException(
+                        "Minimum match length must be at least 2, got: " + minMatchLength);
+            }
+            brickIndex = 3;
+        }
+
         List<Brick> bricks = new ArrayList<>();
-        for (int i = 2; i < tokens.length && bricks.size() < MAX_BRICKS; i++) {
+        for (int i = brickIndex; i < tokens.length && bricks.size() < MAX_BRICKS; i++) {
             bricks.add(parseBrick(tokens[i]));
         }
 
-        return new GameConfig(width, height, Collections.unmodifiableList(bricks));
+        return new GameConfig(width, height, minMatchLength, Collections.unmodifiableList(bricks));
+    }
+
+    /**
+     * True if the token is a decimal integer string suitable as match length
+     * (digits only — never a brick token, which starts with H or V).
+     */
+    private static boolean isMatchLengthToken(String token) {
+        if (token == null || token.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < token.length(); i++) {
+            if (!Character.isDigit(token.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
