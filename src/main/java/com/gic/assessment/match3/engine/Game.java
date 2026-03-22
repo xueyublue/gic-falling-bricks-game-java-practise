@@ -8,6 +8,8 @@ import com.gic.assessment.match3.model.Command;
 import com.gic.assessment.match3.model.Field;
 
 import java.io.PrintStream;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Scanner;
 
@@ -17,7 +19,7 @@ import java.util.Scanner;
  * Lifecycle:  initialise → game loop (per-brick) → game over.
  *
  * The game loop spawns bricks one at a time.  Each brick falls through
- * a series of "frames" where the user enters commands (L/R/D).  Once a
+ * a series of "frames" where the user enters commands (L/R/D/U).  Once a
  * brick can no longer drop, it becomes stationary, matches are checked,
  * and the next brick is spawned.  The round ends when all bricks have
  * been placed or a new brick cannot be spawned (starting cells blocked).
@@ -27,7 +29,7 @@ public class Game {
     private static final String INIT_PROMPT =
             "Please enter field size (width and height) and up to 5 bricks set:";
     private static final String COMMAND_PROMPT =
-            "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D):";
+            "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D, U):";
     private static final String GAME_OVER = "Game Over.";
 
     /** Reads user input from the console */
@@ -133,8 +135,8 @@ public class Game {
      *
      * Each frame:
      *   1. Display the field with the active brick overlaid.
-     *   2. Prompt the user for up to 2 commands (L, R, D).
-     *   3. Apply the parsed commands to the active brick.
+     *   2. Prompt the user for up to 2 commands (L, R, D, U).
+     *   3. Apply commands; U undoes the last successful L/R/D in this frame.
      *   4. Attempt to auto-drop the brick by 1 row:
      *      - If the brick CAN move down  → move it and continue to the next frame.
      *      - If the brick CANNOT move down → it is now stationary; return.
@@ -147,11 +149,7 @@ public class Game {
             out.println(COMMAND_PROMPT);
             List<Command> commands = InputParser.parseCommands(scanner.nextLine());
 
-            // Apply each command in order (moves that would go out of bounds
-            // or collide with a placed brick are silently ignored)
-            for (Command cmd : commands) {
-                activeBrick.applyCommand(cmd, field);
-            }
+            applyCommandsWithUndo(commands);
 
             // Auto-drop: try to move the brick down by 1 row
             if (!activeBrick.canMove(field, 1, 0)) {
@@ -172,5 +170,27 @@ public class Game {
         frameNumber++; // advance the frame counter (first frame = 1)
         out.println("Frame " + frameNumber);
         out.println(FieldRenderer.render(field, brick));
+    }
+
+    /**
+     * Applies frame commands. {@link Command#UNDO} pops the last saved anchor when a prior
+     * L/R/D actually moved the brick.
+     */
+    private void applyCommandsWithUndo(List<Command> commands) {
+        Deque<ActiveBrick.PositionSnapshot> undoStack = new ArrayDeque<>();
+        for (Command cmd : commands) {
+            if (cmd == Command.UNDO) {
+                if (!undoStack.isEmpty()) {
+                    activeBrick.restorePosition(undoStack.pop());
+                }
+            } else {
+                ActiveBrick.PositionSnapshot before = activeBrick.snapshot();
+                activeBrick.applyCommand(cmd, field);
+                ActiveBrick.PositionSnapshot after = activeBrick.snapshot();
+                if (!before.equals(after)) {
+                    undoStack.push(before);
+                }
+            }
+        }
     }
 }

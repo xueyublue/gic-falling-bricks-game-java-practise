@@ -400,4 +400,23 @@ class ActiveBrickTest {
         List<Position> cells = active.getOccupiedCells();
         assertThrows(UnsupportedOperationException.class, () -> cells.add(new Position(9, 9)));
     }
+
+    @Test
+    void snapshotAndRestorePosition() {
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '^', '*');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+        ActiveBrick.PositionSnapshot snap = active.snapshot();
+        active.moveLeft();
+        assertEquals(0, active.getCol());
+        active.restorePosition(snap);
+        assertEquals(1, active.getCol());
+    }
+
+    @Test
+    void applyCommandRejectsUndo() {
+        Field field = new Field(5, 3);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '^', '*');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+        assertThrows(IllegalArgumentException.class, () -> active.applyCommand(Command.UNDO, field));
+    }
 }

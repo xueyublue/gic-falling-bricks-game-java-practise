@@ -15,6 +15,11 @@ import java.util.List;
  */
 public class ActiveBrick {
 
+    /**
+     * Memento: anchor position before a mutating command (for undo within a frame).
+     */
+    public record PositionSnapshot(int row, int col) {}
+
     /** The underlying brick definition (orientation + 3 symbols) */
     private final Brick brick;
 
@@ -48,6 +53,17 @@ public class ActiveBrick {
     /** @return current anchor column (0-indexed, 0 = left) */
     public int getCol() {
         return col;
+    }
+
+    /** Captures the current anchor for {@link #restorePosition(PositionSnapshot)}. */
+    public PositionSnapshot snapshot() {
+        return new PositionSnapshot(row, col);
+    }
+
+    /** Restores the anchor from a previous snapshot (undo). */
+    public void restorePosition(PositionSnapshot snapshot) {
+        this.row = snapshot.row();
+        this.col = snapshot.col();
     }
 
     /**
@@ -154,6 +170,7 @@ public class ActiveBrick {
      * @param command the command to apply (may be null)
      * @param field   the game field used for collision checks
      * @return true if the command was a recognised type (L/R/D), false if null
+     * @throws IllegalArgumentException if {@code UNDO} is passed — handled in {@link com.gic.assessment.match3.engine.Game}
      */
     public boolean applyCommand(Command command, Field field) {
         if (command == null) {
@@ -167,6 +184,7 @@ public class ActiveBrick {
                 if (canMove(field, 0, 1)) moveRight();
             }
             case DROP -> drop(field); // fall as far as possible
+            case UNDO -> throw new IllegalArgumentException("UNDO is handled by Game, not applyCommand");
         }
         return true;
     }

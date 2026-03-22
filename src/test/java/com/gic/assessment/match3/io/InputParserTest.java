@@ -145,6 +145,21 @@ class InputParserTest {
     }
 
     @Test
+    void parseCommandsLeftThenUndo() {
+        List<Command> cmds = InputParser.parseCommands("LU");
+        assertEquals(2, cmds.size());
+        assertEquals(Command.LEFT, cmds.get(0));
+        assertEquals(Command.UNDO, cmds.get(1));
+    }
+
+    @Test
+    void parseCommandsUndoOnly() {
+        List<Command> cmds = InputParser.parseCommands("U");
+        assertEquals(1, cmds.size());
+        assertEquals(Command.UNDO, cmds.get(0));
+    }
+
+    @Test
     void parseInitInputNonNumericWidthThrows() {
         assertThrows(NumberFormatException.class, () -> InputParser.parseInitInput("abc 8"));
     }

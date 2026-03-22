@@ -142,7 +142,7 @@ class GameTest {
         assertFalse(output.contains("Frame 9"), "Should NOT have a 9th frame");
 
         // ── Verify prompt appears for each interactive frame (1-7) ───────
-        String prompt = "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D):";
+        String prompt = "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D, U):";
         int promptCount = countOccurrences(output, prompt);
         assertEquals(7, promptCount,
                 "Prompt should appear exactly 7 times (frames 1-7, not frame 8)");
@@ -199,6 +199,25 @@ class GameTest {
         );
 
         assertTrue(output.contains("Game Over."));
+    }
+
+    @Test
+    void undoWithinFrameRevertsMoveSameAsNoCommand() {
+        String withUndo = runGame(
+                "5 4 H^^*",
+                "LU",
+                "",
+                "",
+                ""
+        );
+        String noOps = runGame(
+                "5 4 H^^*",
+                "",
+                "",
+                "",
+                ""
+        );
+        assertEquals(noOps, withUndo);
     }
 
     @Test

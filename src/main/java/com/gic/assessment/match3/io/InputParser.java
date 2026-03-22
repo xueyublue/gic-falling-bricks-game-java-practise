@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Parses user input for two distinct purposes:
  *   1. Game initialisation  — field dimensions + brick definitions.
- *   2. Per-frame commands   — up to 2 movement commands (L, R, D).
+ *   2. Per-frame commands   — up to 2 movement commands (L, R, D, U).
  */
 public class InputParser {
 
@@ -100,6 +100,7 @@ public class InputParser {
      *   - 'L' → Command.LEFT
      *   - 'R' → Command.RIGHT
      *   - 'D' → Command.DROP
+     *   - 'U' → Command.UNDO
      *   - Any other character is silently skipped.
      *
      * Only the first TWO valid commands are collected; the rest are ignored
