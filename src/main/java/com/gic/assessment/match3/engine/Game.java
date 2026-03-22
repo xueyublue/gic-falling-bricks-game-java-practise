@@ -18,9 +18,10 @@ import java.util.Scanner;
  *
  * The game loop spawns bricks one at a time.  Each brick falls through
  * a series of "frames" where the user enters commands (L/R/D).  Once a
- * brick can no longer drop, it becomes stationary, matches are checked,
- * and the next brick is spawned.  The round ends when all bricks have
- * been placed or a new brick cannot be spawned (starting cells blocked).
+ * brick can no longer drop, it becomes stationary, matches are checked
+ * (each resolution step is shown as its own frame), and the next brick is
+ * spawned.  The round ends when all bricks have been placed or a new brick
+ * cannot be spawned (starting cells blocked).
  */
 public class Game {
 
@@ -94,20 +95,23 @@ public class Game {
      *   1. Spawn it at the top-centre of the field.
      *      If the starting cells are blocked → break (game over).
      *   2. Run processBrick() which handles frames until the brick is stationary.
-     *   3. Write the brick's symbols onto the field permanently.
-     *   4. Check for and clear any 3-in-a-row matches.
+     *   3. Write the brick's symbols onto the field permanently and show a frame.
+     *   4. Clear matches in rounds; after each clearing round that removed cells,
+     *      show a frame (so cascades are visible when multiple rounds exist).
      *   5. Move to the next brick.
      *
-     * After all bricks are placed (or a brick could not be spawned),
-     * a final frame is displayed showing the resulting field state.
+     * A final frame is shown only when there are no bricks, spawn failed, or
+     * the round ends without having just displayed match resolution.
      */
     private void gameLoop() {
+        boolean spawnFailed = false;
         while (currentBrickIndex < bricks.size()) {
             // Try to spawn the next brick at the top-centre of the field
             activeBrick = ActiveBrick.createAtStart(bricks.get(currentBrickIndex), field);
 
             if (activeBrick == null) {
                 // Starting position is blocked → game ends immediately
+                spawnFailed = true;
                 break;
             }
 
@@ -115,17 +119,33 @@ public class Game {
             processBrick();
 
             // Brick is now stationary — write its symbols onto the field
-            activeBrick.placeOnField(field);
-
-            // Remove any horizontal/vertical runs of 3+ matching symbols
-            MatchChecker.checkAndClear(field);
+            placeBrickAndResolveMatches();
 
             // Advance to the next brick in the list
             currentBrickIndex++;
         }
 
-        // Show one final frame (no active brick — only placed symbols are rendered)
+        if (bricks.isEmpty() || spawnFailed) {
+            displayFrame(null);
+        }
+    }
+
+    /**
+     * Locks the active brick onto the field, shows the result, then clears matches
+     * repeatedly. After each clearing pass that removes at least one cell, the field
+     * is shown again (multiple rounds of clearing are visible).
+     */
+    private void placeBrickAndResolveMatches() {
+        activeBrick.placeOnField(field);
         displayFrame(null);
+
+        while (true) {
+            int cleared = MatchChecker.checkAndClear(field);
+            if (cleared == 0) {
+                break;
+            }
+            displayFrame(null);
+        }
     }
 
     /**

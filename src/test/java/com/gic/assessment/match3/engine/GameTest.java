@@ -48,7 +48,8 @@ class GameTest {
         // Input: 5 8 H^^* V*@^
         // Frame 1: LL, Frame 2: R, Frame 3: DR
         // Frame 4: LLR, Frame 5: (blank), Frame 6: R, Frame 7: DR
-        // Frame 8: final field after match clearing, then Game Over.
+        // Frame 4: after brick 1 placed. Frames 5–8: brick 2 (old 4–7).
+        // Frame 9: after brick 2 placed. Frame 10: after match clearing, then Game Over.
         String output = runGame(
                 "5 8 H^^* V*@^",
                 "LL",    // Frame 1
@@ -85,67 +86,81 @@ class GameTest {
         assertTrue(output.contains("Frame 3\n" + frame3Field),
                 "Frame 3: brick should be at row 3, cols 1-3 after R + auto-drop");
 
-        // ── Frame 4: After DR (brick 1 placed) + V*@^ spawns ────────────
+        // ── Frame 4: After brick 1 (H^^*) placed — no matches, next brick not spawned yet ─
+        String frame4Field = buildField(
+                EMPTY_ROW, EMPTY_ROW, EMPTY_ROW, EMPTY_ROW,
+                EMPTY_ROW, EMPTY_ROW, EMPTY_ROW, ". . ^ ^ *");
+        assertTrue(output.contains("Frame 4\n" + frame4Field),
+                "Frame 4: first brick locked on bottom row");
+
+        // ── Frame 5: After DR (brick 1 was already placed) + V*@^ spawns ────────────
         // D: drops to row 7, cols 1-3. R: moves to cols 2-4.
         // Auto-drop: can't (row 8 out of bounds) → stationary.
         // Brick 1 placed: (7,2)=^, (7,3)=^, (7,4)=*. No matches.
         // V*@^ spawns at rows 0-2, col 2: (0,2)=*, (1,2)=@, (2,2)=^
-        String frame4Field = buildField(
+        String frame5Field = buildField(
                 ". . * . .", ". . @ . .", ". . ^ . .", EMPTY_ROW,
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,  ". . ^ ^ *");
-        assertTrue(output.contains("Frame 4\n" + frame4Field),
-                "Frame 4: V*@^ at top-center + H^^* placed at row 8");
+        assertTrue(output.contains("Frame 5\n" + frame5Field),
+                "Frame 5: V*@^ at top-center + H^^* placed at row 8");
 
-        // ── Frame 5: After LLR (only first 2 commands: LL) + auto-drop ──
+        // ── Frame 6: After LLR (only first 2 commands: LL) + auto-drop ──
         // L: col 2→1. L: col 1→0. R is 3rd command, ignored.
         // Auto-drop: row 0→1. Brick at rows 1-3, col 0.
-        String frame5Field = buildField(
+        String frame6Field = buildField(
                 EMPTY_ROW,  "* . . . .", "@ . . . .", "^ . . . .",
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,   ". . ^ ^ *");
-        assertTrue(output.contains("Frame 5\n" + frame5Field),
-                "Frame 5: V*@^ at rows 2-4, col 0 after LL + auto-drop");
+        assertTrue(output.contains("Frame 6\n" + frame6Field),
+                "Frame 6: V*@^ at rows 2-4, col 0 after LL + auto-drop");
 
-        // ── Frame 6: After blank (no commands) + auto-drop ───────────────
+        // ── Frame 7: After blank (no commands) + auto-drop ───────────────
         // No commands. Auto-drop: row 1→2. Brick at rows 2-4, col 0.
-        String frame6Field = buildField(
+        String frame7Field = buildField(
                 EMPTY_ROW,  EMPTY_ROW,  "* . . . .", "@ . . . .",
                 "^ . . . .", EMPTY_ROW,  EMPTY_ROW,  ". . ^ ^ *");
-        assertTrue(output.contains("Frame 6\n" + frame6Field),
-                "Frame 6: V*@^ at rows 3-5, col 0 after auto-drop");
+        assertTrue(output.contains("Frame 7\n" + frame7Field),
+                "Frame 7: V*@^ at rows 3-5, col 0 after auto-drop");
 
-        // ── Frame 7: After R + auto-drop ─────────────────────────────────
+        // ── Frame 8: After R + auto-drop ─────────────────────────────────
         // R: col 0→1. Auto-drop: row 2→3. Brick at rows 3-5, col 1.
-        String frame7Field = buildField(
+        String frame8Field = buildField(
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,  ". * . . .",
                 ". @ . . .", ". ^ . . .", EMPTY_ROW,  ". . ^ ^ *");
-        assertTrue(output.contains("Frame 7\n" + frame7Field),
-                "Frame 7: V*@^ at rows 4-6, col 1 after R + auto-drop");
+        assertTrue(output.contains("Frame 8\n" + frame8Field),
+                "Frame 8: V*@^ at rows 4-6, col 1 after R + auto-drop");
 
-        // ── Frame 8: Final frame after placement + match clearing ────────
-        // DR in Frame 7: D drops to rows 5-7, col 1.
+        // ── Frame 9: After second brick placed (before match clear) ─────
+        // DR in Frame 8: D drops to rows 5-7, col 1.
         // R: blocked (col 2, row 7 has ^). Auto-drop: can't → stationary.
         // Placed: (5,1)=*, (6,1)=@, (7,1)=^
-        // Row 7 becomes: . ^ ^ ^ * → 3 matching ^ at cols 1-3 → cleared.
+        // Row 7: . ^ ^ ^ * → 3 matching ^ at cols 1-3 → cleared next frame.
+        String frame9Field = buildField(
+                EMPTY_ROW, EMPTY_ROW, EMPTY_ROW, EMPTY_ROW,
+                EMPTY_ROW, ". * . . .", ". @ . . .", ". ^ ^ ^ *");
+        assertTrue(output.contains("Frame 9\n" + frame9Field),
+                "Frame 9: field after brick 2 placed, before match clear");
+
+        // ── Frame 10: After match clearing ───────────────────────────────
         // Final row 7: . . . . *
-        String frame8Field = buildField(
+        String frame10Field = buildField(
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,
                 EMPTY_ROW,  ". * . . .", ". @ . . .", ". . . . *");
-        assertTrue(output.contains("Frame 8\n" + frame8Field),
-                "Frame 8: final field after 3 ^ cleared from row 8");
+        assertTrue(output.contains("Frame 10\n" + frame10Field),
+                "Frame 10: final field after 3 ^ cleared from row 8");
 
         // ── Game Over follows the last frame ─────────────────────────────
         assertTrue(output.contains("Game Over."),
                 "Game should end after all bricks are placed");
 
-        // ── Verify frame count: exactly 8 frames ────────────────────────
-        assertTrue(output.contains("Frame 8"), "Should have 8 frames total");
-        assertFalse(output.contains("Frame 9"), "Should NOT have a 9th frame");
+        // ── Verify frame count: exactly 10 frames ────────────────────────
+        assertTrue(output.contains("Frame 10"), "Should have 10 frames total");
+        assertFalse(output.contains("Frame 11"), "Should NOT have an 11th frame");
 
-        // ── Verify prompt appears for each interactive frame (1-7) ───────
+        // ── Verify prompt appears for each interactive frame (1-3, 5-8) ───────
         String prompt = "Enter up to 2 commands to process before moving to the next frame (valid commands are L, R, D):";
         int promptCount = countOccurrences(output, prompt);
         assertEquals(7, promptCount,
-                "Prompt should appear exactly 7 times (frames 1-7, not frame 8)");
+                "Prompt should appear exactly 7 times (interactive frames only)");
     }
 
     /** Counts how many times a substring appears in a string. */
@@ -355,6 +370,6 @@ class GameTest {
         );
 
         assertTrue(output.contains("Game Over."));
-        assertTrue(output.contains("Frame 6")); // 5 interactive frames + 1 final
+        assertTrue(output.contains("Frame 10")); // 5 interactive + 5 placement frames
     }
 }
