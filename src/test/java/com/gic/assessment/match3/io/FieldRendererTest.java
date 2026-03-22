@@ -130,4 +130,35 @@ class FieldRendererTest {
         String rendered = FieldRenderer.render(field, null);
         assertFalse(rendered.endsWith("\n"));
     }
+
+    @Test
+    void renderWithNextHorizontalBrickPreview() {
+        Field field = new Field(5, 3);
+        Brick next = new Brick(Orientation.HORIZONTAL, '^', '*', '@');
+        String rendered = FieldRenderer.render(field, null, next);
+        assertTrue(rendered.startsWith("1\t| . . . . . |   Next: H ^ * @"));
+        assertEquals("2\t| . . . . . |", rendered.split("\n")[1]);
+    }
+
+    @Test
+    void renderWithNextVerticalBrickPreview() {
+        Field field = new Field(3, 5);
+        Brick next = new Brick(Orientation.VERTICAL, '~', '^', '@');
+        String[] lines = FieldRenderer.render(field, null, next).split("\n");
+        assertEquals("1\t| . . . |   Next: V ~", lines[0]);
+        assertEquals("2\t| . . . |           ^", lines[1]);
+        assertEquals("3\t| . . . |           @", lines[2]);
+        assertEquals("4\t| . . . |", lines[3]);
+        assertEquals("5\t| . . . |", lines[4]);
+    }
+
+    @Test
+    void renderWithNullNextSameAsTwoArgRender() {
+        Field field = new Field(5, 3);
+        Brick brick = new Brick(Orientation.HORIZONTAL, '^', '^', '*');
+        ActiveBrick active = new ActiveBrick(brick, 0, 1);
+        assertEquals(
+                FieldRenderer.render(field, active),
+                FieldRenderer.render(field, active, null));
+    }
 }

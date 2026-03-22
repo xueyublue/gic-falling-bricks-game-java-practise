@@ -40,6 +40,24 @@ class GameTest {
         );
     }
 
+    /**
+     * Same as {@link #buildField} but with next-brick preview for V*@^ (PDF example),
+     * matching {@link com.gic.assessment.match3.io.FieldRenderer}.
+     */
+    private String buildFieldWithNextV(String r1, String r2, String r3, String r4,
+                                       String r5, String r6, String r7, String r8) {
+        return String.join("\n",
+                "1\t| " + r1 + " |   Next: V *",
+                "2\t| " + r2 + " |           @",
+                "3\t| " + r3 + " |           ^",
+                "4\t| " + r4 + " |",
+                "5\t| " + r5 + " |",
+                "6\t| " + r6 + " |",
+                "7\t| " + r7 + " |",
+                "8\t| " + r8 + " |"
+        );
+    }
+
     private static final String EMPTY_ROW = ". . . . .";
 
     @Test
@@ -62,7 +80,7 @@ class GameTest {
 
         // ── Frame 1: H^^* spawns centered at row 0, cols 1-3 ────────────
         // Brick is at: (0,1)=^, (0,2)=^, (0,3)=*
-        String frame1Field = buildField(
+        String frame1Field = buildFieldWithNextV(
                 ". ^ ^ * .", EMPTY_ROW, EMPTY_ROW, EMPTY_ROW,
                 EMPTY_ROW,  EMPTY_ROW, EMPTY_ROW, EMPTY_ROW);
         assertTrue(output.contains("Frame 1\n" + frame1Field),
@@ -71,7 +89,7 @@ class GameTest {
         // ── Frame 2: After LL (only 1st L applied, 2nd ignored) + auto-drop ─
         // L: col 1→0. Second L: col -1 out of bounds, ignored.
         // Auto-drop: row 0→1. Brick at (1, 0): ^, ^, *
-        String frame2Field = buildField(
+        String frame2Field = buildFieldWithNextV(
                 EMPTY_ROW, "^ ^ * . .", EMPTY_ROW, EMPTY_ROW,
                 EMPTY_ROW, EMPTY_ROW,   EMPTY_ROW, EMPTY_ROW);
         assertTrue(output.contains("Frame 2\n" + frame2Field),
@@ -79,7 +97,7 @@ class GameTest {
 
         // ── Frame 3: After R + auto-drop ─────────────────────────────────
         // R: col 0→1. Auto-drop: row 1→2. Brick at (2, 1): ^, ^, *
-        String frame3Field = buildField(
+        String frame3Field = buildFieldWithNextV(
                 EMPTY_ROW, EMPTY_ROW, ". ^ ^ * .", EMPTY_ROW,
                 EMPTY_ROW, EMPTY_ROW, EMPTY_ROW,   EMPTY_ROW);
         assertTrue(output.contains("Frame 3\n" + frame3Field),

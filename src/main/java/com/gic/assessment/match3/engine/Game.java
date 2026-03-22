@@ -171,6 +171,17 @@ public class Game {
     private void displayFrame(ActiveBrick brick) {
         frameNumber++; // advance the frame counter (first frame = 1)
         out.println("Frame " + frameNumber);
-        out.println(FieldRenderer.render(field, brick));
+        out.println(FieldRenderer.render(field, brick, peekNextBrick()));
+    }
+
+    /**
+     * @return the brick that will spawn after the current one, or null if none
+     */
+    private Brick peekNextBrick() {
+        int next = currentBrickIndex + 1;
+        if (bricks == null || next >= bricks.size()) {
+            return null;
+        }
+        return bricks.get(next);
     }
 }

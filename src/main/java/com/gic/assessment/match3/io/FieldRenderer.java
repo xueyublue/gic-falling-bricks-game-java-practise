@@ -1,6 +1,7 @@
 package com.gic.assessment.match3.io;
 
 import com.gic.assessment.match3.model.ActiveBrick;
+import com.gic.assessment.match3.model.Brick;
 import com.gic.assessment.match3.model.Field;
 import com.gic.assessment.match3.model.Position;
 
@@ -17,50 +18,90 @@ import java.util.List;
  *
  * If an ActiveBrick is provided, its symbols are overlaid on top of the
  * field grid so the user can see the brick in its current position.
+ *
+ * An optional {@link Brick} preview shows the next brick to spawn, rendered
+ * in a column to the right of each field row (aligned on the first rows).
  */
 public class FieldRenderer {
 
+    private static final String PREVIEW_GAP = "   ";
+
     /**
-     * Builds a display string showing the field with an optional active brick.
+     * Same as {@link #render(Field, ActiveBrick, Brick)} with no next-brick preview.
+     */
+    public static String render(Field field, ActiveBrick activeBrick) {
+        return render(field, activeBrick, null);
+    }
+
+    /**
+     * Builds a display string showing the field with an optional active brick
+     * and an optional preview of the upcoming brick definition.
      *
      * @param field       the game field (contains placed/stationary bricks)
      * @param activeBrick the currently falling brick to overlay, or null if none
+     * @param nextBrick   the next brick in the queue to show as a preview, or null
      * @return a multi-line string ready to be printed to the console
      */
-    public static String render(Field field, ActiveBrick activeBrick) {
-        // Build a 2D char array that merges the field grid + active brick
+    public static String render(Field field, ActiveBrick activeBrick, Brick nextBrick) {
         char[][] display = buildDisplayGrid(field, activeBrick);
+        String[] previewColumn = buildNextBrickPreviewColumn(nextBrick, field.getHeight());
 
         StringBuilder sb = new StringBuilder();
 
-        // Determine padding width for row labels (e.g. height=8 → width 1,
-        // height=12 → width 2) so numbers align neatly.
         int rowLabelWidth = String.valueOf(field.getHeight()).length();
 
         for (int row = 0; row < field.getHeight(); row++) {
-            // Row number, right-aligned and padded, e.g. " 1" or "12"
             sb.append(padLeft(row + 1, rowLabelWidth));
 
-            // Tab + opening border
             sb.append("\t| ");
 
-            // Print each cell in this row, separated by spaces
             for (int col = 0; col < field.getWidth(); col++) {
                 if (col > 0) {
-                    sb.append(' '); // space between columns
+                    sb.append(' ');
                 }
-                sb.append(display[row][col]); // the character to show
+                sb.append(display[row][col]);
             }
 
-            // Closing border
             sb.append(" |");
 
-            // Newline between rows, but not after the very last row
+            if (previewColumn[row] != null && !previewColumn[row].isEmpty()) {
+                sb.append(PREVIEW_GAP).append(previewColumn[row]);
+            }
+
             if (row < field.getHeight() - 1) {
                 sb.append('\n');
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * One display line per field row: text shown to the right of the field border.
+     * Horizontal next bricks use the first row only; vertical uses up to three rows.
+     */
+    private static String[] buildNextBrickPreviewColumn(Brick next, int fieldHeight) {
+        String[] lines = new String[fieldHeight];
+        for (int i = 0; i < fieldHeight; i++) {
+            lines[i] = "";
+        }
+        if (next == null) {
+            return lines;
+        }
+        if (next.isHorizontal()) {
+            lines[0] = String.format(
+                    "Next: H %c %c %c",
+                    next.symbolAt(0), next.symbolAt(1), next.symbolAt(2));
+        } else {
+            lines[0] = String.format("Next: V %c", next.symbolAt(0));
+            // Align lower symbols under the top cell (same column as char after "V ")
+            if (fieldHeight > 1) {
+                lines[1] = String.format("        %c", next.symbolAt(1));
+            }
+            if (fieldHeight > 2) {
+                lines[2] = String.format("        %c", next.symbolAt(2));
+            }
+        }
+        return lines;
     }
 
     /**
