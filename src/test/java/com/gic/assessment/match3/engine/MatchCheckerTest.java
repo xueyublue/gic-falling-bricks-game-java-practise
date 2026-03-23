@@ -294,4 +294,23 @@ class MatchCheckerTest {
             assertEquals(Field.EMPTY, field.getCell(i, 0));
         }
     }
+
+    @Test
+    void gravityAndChainDrops() {
+        Field field = new Field(6,6);
+        field.setCell(0,0,'^');
+        field.setCell(1,0,'*');
+        field.setCell(2,0,'*');
+        field.setCell(3,0,'*');
+        field.setCell(4,0,'^');
+        field.setCell(5,0,'^');
+
+        int cleared = MatchChecker.checkAndClear(field);
+
+        assertEquals(6, cleared);
+
+        for (int i = 0; i < 6; i++) {
+            assertEquals(Field.EMPTY, field.getCell(i, 0));
+        }
+    }
 }

@@ -31,18 +31,26 @@ public class MatchChecker {
      * @return the total number of cells that were cleared
      */
     public static int checkAndClear(Field field) {
+        int totalCleared = 0;
+        int cleared = 0;
+        do {
+            cleared = singleCheckAndClear(field);
+            if (cleared > 0) {
+                field.applyGravity();
+            }
+            totalCleared += cleared;
+        } while (cleared > 0);
+        return totalCleared;
+    }
+
+    public static int singleCheckAndClear(Field field) {
         // toRemove[row][col] = true means this cell is part of a match
         boolean[][] toRemove = new boolean[field.getHeight()][field.getWidth()];
 
         markHorizontalRuns(field, toRemove);
         markVerticalRuns(field, toRemove);
 
-        int clearedCount = clearMarkedCells(field, toRemove);
-
-        // TODO: cascading later
-        field.applyGravity();
-
-        return clearedCount;
+        return clearMarkedCells(field, toRemove);
     }
 
     /**
