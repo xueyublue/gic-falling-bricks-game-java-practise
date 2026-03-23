@@ -140,4 +140,24 @@ class FieldTest {
         assertTrue(ex.getMessage().contains("10"));
         assertTrue(ex.getMessage().contains("3"));
     }
+
+    @Test
+    void gravityDropSingleCell() {
+        Field field = new Field(3, 3);
+        field.setCell(0, 0, '*');
+        field.applyGravity();
+        assertEquals('*', field.getCell(2, 0));
+    }
+
+    @Test
+    void gravityDropMultipleCells() {
+        Field field = new Field(5, 5);
+        field.setCell(1, 0, '^');
+        field.setCell(2, 0, '@');
+        field.setCell(3, 0, '*');
+        field.applyGravity();
+        assertEquals('^', field.getCell(2, 0));
+        assertEquals('@', field.getCell(3, 0));
+        assertEquals('*', field.getCell(4, 0));
+    }
 }

@@ -129,7 +129,7 @@ class GameTest {
         // Final row 7: . . . . *
         String frame8Field = buildField(
                 EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,  EMPTY_ROW,
-                EMPTY_ROW,  ". * . . .", ". @ . . .", ". . . . *");
+                EMPTY_ROW,  ". . . . .", ". * . . .", ". @ . . *");
         assertTrue(output.contains("Frame 8\n" + frame8Field),
                 "Frame 8: final field after 3 ^ cleared from row 8");
 

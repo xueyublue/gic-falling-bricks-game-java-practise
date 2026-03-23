@@ -37,7 +37,12 @@ public class MatchChecker {
         markHorizontalRuns(field, toRemove);
         markVerticalRuns(field, toRemove);
 
-        return clearMarkedCells(field, toRemove);
+        int clearedCount = clearMarkedCells(field, toRemove);
+
+        // TODO: cascading later
+        field.applyGravity();
+
+        return clearedCount;
     }
 
     /**

@@ -105,6 +105,21 @@ public class Field {
         return isInBounds(row, col) && grid[row][col] != EMPTY;
     }
 
+    public void applyGravity() {
+        for (int col = 0; col < width; col++) {
+            int writeRow = height - 1;
+            for (int readRow = height - 1; readRow >= 0; readRow--) {
+                if (grid[readRow][col] != EMPTY) {
+                    grid[writeRow][col] = grid[readRow][col];
+                    if (readRow != writeRow) {
+                        grid[readRow][col] = EMPTY;
+                    }
+                    writeRow--;
+                }
+            }
+        }
+    }
+
     private void validateBounds(int row, int col) {
         if (!isInBounds(row, col)) {
             throw new IndexOutOfBoundsException(

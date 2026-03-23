@@ -269,11 +269,29 @@ class MatchCheckerTest {
         int cleared = MatchChecker.checkAndClear(field);
         assertEquals(3, cleared); // three ^ at row 7, cols 1,2,3
 
-        assertEquals('*', field.getCell(5, 1));
-        assertEquals('@', field.getCell(6, 1));
-        assertEquals(Field.EMPTY, field.getCell(7, 1));
+        assertEquals(Field.EMPTY, field.getCell(5, 1));
+        assertEquals('*', field.getCell(6, 1));
+        assertEquals('@', field.getCell(7, 1));
         assertEquals(Field.EMPTY, field.getCell(7, 2));
         assertEquals(Field.EMPTY, field.getCell(7, 3));
         assertEquals('*', field.getCell(7, 4));
+    }
+
+    @Test
+    void gravityAfterClearDrops() {
+        Field field = new Field(5, 5);
+        field.setCell(0, 0, '^');
+        field.setCell(2, 0, '^');
+        field.setCell(3, 0, '^');
+        field.setCell(4, 0, '^');
+
+        int cleared = MatchChecker.checkAndClear(field);
+
+        assertEquals(3, cleared);
+        assertEquals('^', field.getCell(4, 0));
+
+        for (int i = 0; i < 4; i++) {
+            assertEquals(Field.EMPTY, field.getCell(i, 0));
+        }
     }
 }

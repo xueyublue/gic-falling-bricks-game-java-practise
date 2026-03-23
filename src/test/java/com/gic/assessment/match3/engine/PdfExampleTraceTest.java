@@ -152,14 +152,14 @@ class PdfExampleTraceTest {
         assertEquals(3, cleared);
 
         // After clearing: row 7 cols 1,2,3 are empty, col 4 still has *
-        assertEquals(Field.EMPTY, field.getCell(7, 1));
+        assertEquals(Field.EMPTY, field.getCell(5, 1));
         assertEquals(Field.EMPTY, field.getCell(7, 2));
         assertEquals(Field.EMPTY, field.getCell(7, 3));
         assertEquals('*', field.getCell(7, 4));
 
         // Other cells from brick 2 remain
-        assertEquals('*', field.getCell(5, 1));
-        assertEquals('@', field.getCell(6, 1));
+        assertEquals('*', field.getCell(6, 1));
+        assertEquals('@', field.getCell(7, 1));
 
         // Final state matches PDF explanation:
         // Row 6 (1-indexed): . * . . .
